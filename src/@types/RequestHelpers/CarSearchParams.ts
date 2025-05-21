@@ -16,7 +16,7 @@ export interface CarSearchParams {
 
   engineType?: EngineType | undefined;
   gearType?: GearType | undefined;
-  carType?: CarType | undefined;)
+  carType?: CarType | undefined;
 
   isUsed?: boolean;
   isApproved?: boolean;

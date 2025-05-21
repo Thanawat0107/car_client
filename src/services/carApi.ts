@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { baseUrlAPI } from "../utility/SD";
-import { CarDto } from "@/types/dto/CarDto";
-import { CarSearchParams } from "@/types/RequestHelpers/CarSearchParams";
-import { PaginationMeta } from "@/types/Responsts/PaginationMeta";
-import { ApiResponse } from "@/types/Responsts/ApiResponse";
-import { CarCreateDto } from "@/types/dto/create-dto/CarCreateDto";
+import { CarDto } from "@/@types/dto/CarDto";
+import { PaginationMeta } from "@/@types/Responsts/PaginationMeta";
+import { CarSearchParams } from "@/@types/RequestHelpers/CarSearchParams";
+import { ApiResponse } from "@/@types/Responsts/ApiResponse";
+import { CarCreateDto } from "@/@types/dto/create-dto/CarCreateDto";
 
 const carApi = createApi({
   reducerPath: "carApi",
