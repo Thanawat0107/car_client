@@ -1,4 +1,4 @@
-import { CarType, EngineType, GearType, Status } from "../dto/Enum";
+import { CarType, EngineType, GearType, Status } from "../Enum";
 
 export interface CarSearchParams {
   searchTerm?: string;

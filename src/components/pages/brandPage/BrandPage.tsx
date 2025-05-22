@@ -1,11 +1,13 @@
+/* eslint-disable @next/next/no-img-element */
+
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppHookState";
-import { useGetbrandAllQuery } from "@/services/brandApi";
+import { useGetBrandAllQuery } from "@/services/brandApi";
 import { setBrands } from "@/stores/slices/brandSlice";
 import React, { useEffect } from "react";
 
 export default function BrandPage() {
   const dispatch = useAppDispatch();
-  const { data: result, error, isLoading } = useGetbrandAllQuery(null);
+  const { data: result, error, isLoading } = useGetBrandAllQuery(null);
   const brands = useAppSelector((state) => state.brand.brands);
 
   useEffect(() => {
@@ -14,7 +16,13 @@ export default function BrandPage() {
     }
   }, [result, error, dispatch]);
 
-  if (isLoading) return <p>Loading...</p>;
+  if (isLoading)
+    return (
+      <div className="flex justify-center items-center h-40">
+        <span className="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+    );
+
   if (error) return <div>เกิดข้อผิดพลาดในการโหลดข้อมูล</div>;
 
   return (

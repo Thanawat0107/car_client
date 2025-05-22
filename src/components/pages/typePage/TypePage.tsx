@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { CarType } from "@/@types/dto/Enum";
+import { CarType } from "@/@types/Enum";
 import React from "react";
 
 const categories: { label: string; image: string; type: CarType }[] = [

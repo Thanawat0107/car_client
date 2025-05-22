@@ -2,8 +2,15 @@
 @plugin "daisyui";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+--color-primary: #1F3C88;
+  --color-accent: #F9A825;
+  --color-neutral: #A1887F;
+  --color-text: #333333;
+  --color-background: #FFFFFF;
+  --background: #FFFFFF;
+  --foreground: #534b4b;
+  --font-sans: system-ui, sans-serif;
+  --font-mono: ui-monospace, monospace;
 }
 
 @theme inline {
@@ -13,6 +20,7 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Theme สีสำหรับ Dark Mode */
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
@@ -20,8 +28,26 @@
   }
 }
 
+/* ใช้งานใน body */
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+}
+
+/* ปุ่ม custom ด้วย @apply + CSS var */
+.btn-primary {
+  @apply text-white font-semibold py-2 px-4 rounded;
+  background-color: var(--color-primary);
+}
+
+.btn-accent {
+  @apply text-white font-semibold py-2 px-4 rounded;
+  background-color: var(--color-accent);
+}
+
+.card-custom {
+  @apply p-4 rounded shadow;
+  background-color: var(--color-neutral);
+  color: var(--color-text);
 }

@@ -1,4 +1,4 @@
-import { CarType, EngineType, GearType, Status } from "../Enum";
+import { CarType, EngineType, GearType, Status } from "../../Enum";
 
 export interface CarCreateDto {
   id: number;

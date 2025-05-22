@@ -1,5 +1,5 @@
 import { BrandDto } from "./BrandDto";
-import { CarType, EngineType, GearType, Status } from "./Enum";
+import { CarType, EngineType, GearType, Status } from "../Enum";
 import { SellerDto } from "./SellerDto";
 
 export interface CarDto {

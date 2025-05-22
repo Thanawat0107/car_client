@@ -1,5 +1,5 @@
 // constants/defaultSearchParams.ts
-import { CarSearchParams } from "@/types/RequestHelpers/CarSearchParams";
+import { CarSearchParams } from "@/@types/RequestHelpers/CarSearchParams";
 
 export const defaultCarSearchParams: CarSearchParams = {
   searchTerm: "",
@@ -23,5 +23,5 @@ export const defaultCarSearchParams: CarSearchParams = {
   engineNumber: "",
   sortBy: "id",
   pageNumber: 1,
-  pageSize: 4,
+  pageSize: 10,
 };

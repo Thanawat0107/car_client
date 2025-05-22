@@ -1,18 +1,49 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useDeletebrandMutation, useGetbrandAllQuery } from "@/services/brandApi";
 import { useRouter } from "next/navigation";
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  useGetBrandAllQuery,
+  useDeleteBrandMutation,
+} from "@/services/brandApi";
+import { BrandSearchParams } from "@/@types/RequestHelpers/BrandSearchParams";
+import { defaultBrandSearchParams } from "./defaultBrandSearchParams";
+import debounce from "lodash/debounce";
+import Pagination from "../pagination/Pagination";
 
 export default function BrandList() {
-  const { data: result, isLoading, isError } = useGetbrandAllQuery(null);
-  const [deleteBrand, { isLoading: isDeleting }] = useDeletebrandMutation();
+  const [filters, setFilters] = useState<BrandSearchParams>(
+    defaultBrandSearchParams
+  );
+
+  const [search, setSearch] = useState("");
+
+  const debouncedSetSearchTerm = useMemo(
+    () =>
+      debounce((val: string) => {
+        setFilters((prev) => ({ ...prev, searchTerm: val, pageNumber: 1 }));
+      }, 500),
+    []
+  );
+
+  useEffect(() => {
+    debouncedSetSearchTerm(search);
+    return () => debouncedSetSearchTerm.cancel();
+  }, [search]);
+
+  const { data: result, isLoading, error } = useGetBrandAllQuery(filters);
+  const [deleteBrand, { isLoading: isDeleting }] = useDeleteBrandMutation();
   const router = useRouter();
 
-  const brands = result?.result;
+  const handlePageChange = (page: number) => {
+    setFilters((prev) => ({
+      ...prev,
+      pageNumber: page,
+    }));
+  };
 
-    const handleDelete = async (id: number) => {
+  const handleDelete = async (id: number) => {
     if (confirm("คุณแน่ใจหรือไม่ว่าต้องการลบแบรนด์นี้?")) {
       try {
         await deleteBrand(id).unwrap();
@@ -24,12 +55,17 @@ export default function BrandList() {
     }
   };
 
-    const handleEdit = (id: number) => {
+  const handleEdit = (id: number) => {
     router.push(`/brand/edit/${id}`);
-  }
+  };
 
-  if (isLoading) return <p>Loading...</p>;
-  if (isError) return <p>Error loading brands</p>;
+  const brands = result?.result ?? [];
+  const pagination = result?.meta;
+
+  if (isLoading) return <p className="p-4 text-gray-500">กำลังโหลด...</p>;
+
+  if (error)
+    return <p className="p-4 text-red-500">เกิดข้อผิดพลาดในการโหลดรถ</p>;
 
   return (
     <div className="overflow-x-auto">
@@ -44,7 +80,7 @@ export default function BrandList() {
           </tr>
         </thead>
         <tbody>
-          {brands?.map((brand: any) => (
+          {brands?.map((brand) => (
             <tr key={brand.id}>
               <th>
                 <label>
@@ -58,10 +94,6 @@ export default function BrandList() {
                     <img
                       src={brand.imageUrl}
                       alt={brand.name}
-                      onError={(e) =>
-                        (e.currentTarget.src =
-                          "https://via.placeholder.com/50?text=No+Image")
-                      }
                     />
                   </div>
                 </div>

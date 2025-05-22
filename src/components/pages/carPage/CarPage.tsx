@@ -21,7 +21,7 @@ export default function CarPage() {
   if (error) return <div>เกิดข้อผิดพลาดในการโหลดข้อมูล</div>;
 
   return (
-    <div className="bg-emerald-600 py-8 px-20">
+    <div className="bg-[var(--foreground)] py-8 px-20">
       <h1 className="text-3xl font-bold text-white mb-6 text-center">
         รถแนะนำสำหรับคุณ
       </h1>
