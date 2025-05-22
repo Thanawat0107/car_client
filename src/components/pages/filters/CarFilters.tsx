@@ -29,11 +29,36 @@ const CarFilters: FC<CarFiltersProps> = ({
   const handleChange = (field: keyof CarSearchParams, value: any) => {
     setFilters({ ...filters, [field]: value, pageNumber: 1 });
   };
+
+  const handleReset = () => {
+    setFilters({
+      pageNumber: 1,
+      pageSize: 3,
+    });
+    setSearch("");
+  };
   return (
     <div className="bg-white shadow-md rounded-lg p-6 w-full">
-      <h2 className="text-lg font-semibold mb-4 text-gray-700">
-        🔍 ค้นหารถยนต์
-      </h2>
+
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
+        <h2 className="text-lg font-semibold text-gray-700">🔍 ค้นหารถยนต์</h2>
+
+        {/* ปุ่มค้นหาและรีเซต */}
+        <div className="flex flex-col sm:flex-row justify-end gap-3">
+          <button
+            onClick={handleReset}
+            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg shadow-sm"
+          >
+            ♻️ รีเซต
+          </button>
+          <button
+            onClick={() => setFilters({ ...filters, pageNumber: 1 })}
+            className="px-4 py-2 bg-primary hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm"
+          >
+            🔍 ค้นหา
+          </button>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         <SearchInput value={search} onChange={setSearch} />

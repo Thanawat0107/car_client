@@ -10,6 +10,8 @@ import { defaultCarSearchParams } from "./defaultCarSearchParams";
 import { CarSearchParams } from "@/@types/RequestHelpers/CarSearchParams";
 import Pagination from "../pagination/Pagination";
 
+const path = "/manages/car/create";
+
 export default function CarList() {
   const [filters, setFilters] = useState<CarSearchParams>(
     defaultCarSearchParams
@@ -40,7 +42,7 @@ export default function CarList() {
       pageNumber: page,
     }));
   };
-  
+
   const cars = result?.result ?? [];
   const pagination = result?.meta;
 
@@ -49,10 +51,16 @@ export default function CarList() {
   if (error)
     return <p className="p-4 text-red-500">เกิดข้อผิดพลาดในการโหลดรถ</p>;
 
-
   return (
     <div className="p-4 space-y-4">
       <div className="flex flex-col md:flex-row gap-2">
+        <button
+          onClick={() => router.push(path)}
+          className="px-4 py-2 bg-primary hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm"
+        >
+          เพิ่มรถใหม่
+        </button>
+
         <CarFilters
           filters={filters}
           setFilters={setFilters}
@@ -61,34 +69,94 @@ export default function CarList() {
         />
       </div>
 
-      {cars.length === 0 ? (
-        <p className="text-gray-500 mt-4">ไม่พบข้อมูลรถ</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {cars.map((car) => (
-            <div
-              key={car.id}
-              className="border p-4 rounded-lg shadow hover:shadow-md transition"
-            >
-              <img
-                src={car.imageUrl}
-                alt={car.model}
-                className="w-full h-40 object-cover rounded mb-2"
-              />
-              <h3 className="text-lg font-semibold">
-                {car.brand.name} {car.model}
-              </h3>
-              <p className="text-sm text-gray-600">{car.description}</p>
-              <p className="text-blue-600 font-bold mt-2">
-                {car.price.toLocaleString()} บาท
-              </p>
-              <p className="text-sm text-gray-500">
-                ปี: {car.year} | ไมล์: {car.mileage} กม.
-              </p>
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="overflow-x-auto">
+        <table className="table">
+          <thead>
+            <tr>
+              <th>ลำดับ</th>
+              <th>แบรนด์</th>
+              <th>ทะเบียน</th>
+              <th>รุ่น</th>
+              <th>ปี</th>
+              <th>สี</th>
+              <th>ราคา</th>
+              <th>รูปภาพ</th>
+              <th>ใช้งาน</th>
+              <th>สถานะ</th>
+              <th>จัดการ</th>
+            </tr>
+          </thead>
+          <tbody>
+            {cars.map((car, index) => (
+              <tr key={car.id}>
+                <td>{index + 1}</td>
+                <td className="font-medium">{car.brand?.name}</td>
+                <td>{car.carRegistrationNumber || "-"}</td>
+                <td>{car.model || "-"}</td>
+                <td>{car.year || "-"}</td>
+                <td>{car.color || "-"}</td>
+                <td>{car.price.toLocaleString()} ฿</td>
+                <td>
+                  <div className="avatar">
+                    <div className="mask mask-squircle w-12 h-12">
+                      <img
+                        src={car.imageUrl || "/placeholder.png"}
+                        alt="รูปภาพรถ"
+                      />
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <input
+                    type="checkbox"
+                    checked={car.isUsed}
+                    className="toggle toggle-success"
+                    readOnly
+                  />
+                </td>
+                <td>
+                  <span
+                    className={`badge ${
+                      car.isApproved ? "badge-success" : "badge-warning"
+                    }`}
+                  >
+                    {car.isApproved ? "อนุมัติแล้ว" : "รอตรวจสอบ"}
+                  </span>
+                </td>
+                <td className="flex gap-2">
+                  <button
+                    className="btn btn-sm btn-outline btn-warning"
+                    // onClick={() => handleEdit(car.id)}
+                  >
+                    แก้ไข
+                  </button>
+                  <button
+                    className="btn btn-sm btn-outline btn-error"
+                    // onClick={() => handleDelete(car.id)}
+                  >
+                    ลบ
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr>
+              <th>ลำดับ</th>
+              <th>แบรนด์</th>
+              <th>ทะเบียน</th>
+              <th>รุ่น</th>
+              <th>ปี</th>
+              <th>สี</th>
+              <th>ราคา</th>
+              <th>รูปภาพ</th>
+              <th>ใช้งาน</th>
+              <th>สถานะ</th>
+              <th>จัดการ</th>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
 
       {pagination && (
         <Pagination pagination={pagination} onPageChange={handlePageChange} />

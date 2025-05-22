@@ -23,5 +23,5 @@ export const defaultCarSearchParams: CarSearchParams = {
   engineNumber: "",
   sortBy: "id",
   pageNumber: 1,
-  pageSize: 10,
+  pageSize: 5,
 };

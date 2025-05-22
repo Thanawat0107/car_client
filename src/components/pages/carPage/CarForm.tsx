@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from "react";
-import { EngineType, CarType, Status, GearType } from "@/types/dto/Enum";
-import { Car } from "@/types/dto/Car";
+import { CarDto } from "@/@types/dto/CarDto";
+import { CarType, EngineType, GearType, Status } from "@/@types/Enum";
 
 type CarFormProps = {
   onSubmit: (data: FormData) => void;
-  initialData?: Car;
+  initialData?: CarDto;
 };
 
 export default function CarForm({ onSubmit, initialData }: CarFormProps) {
