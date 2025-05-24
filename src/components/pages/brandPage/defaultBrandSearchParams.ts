@@ -7,5 +7,5 @@ export const defaultBrandSearchParams: BrandSearchParams = {
   sortBy: "id",
 
   pageNumber: 1,
-  pageSize: 10,
+  pageSize: 5,
 };
