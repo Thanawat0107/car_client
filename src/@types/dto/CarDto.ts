@@ -13,20 +13,20 @@ export interface CarDto {
   carRegistrationNumber?: string;
   carIdentificationNumber?: string;
   engineNumber?: string;
-  model?: string;
-  year?: number;
+  model: string;
+  year: number;
   price: number;
   mileage: number;
-  color?: string;
+  color: string;
 
   engineType: EngineType;
   gearType: GearType;
   carType: CarType;
 
-  description?: string;
+  description: string;
   imageUrl?: string;
   createdAt: string; 
-  updatedAt?: string;
+  updatedAt: string;
   status: Status;
   isUsed: boolean;
   isApproved: boolean;

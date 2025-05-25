@@ -1,8 +1,6 @@
 import { CarType, EngineType, GearType, Status } from "../../Enum";
 
 export interface CarCreateDto {
-  id: number;
-
   sellerId: number;
   brandId: number;
 

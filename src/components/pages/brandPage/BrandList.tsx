@@ -21,6 +21,7 @@ import { baseUrl } from "@/utility/SD";
 
 const MySwal = withReactContent(Swal);
 const createPath = "/manages/brand/create";
+const editPath = "/manages/brand/edit/";
 
 export default function BrandList() {
   const [filters, setFilters] = useState<BrandSearchParams>(
@@ -46,7 +47,7 @@ export default function BrandList() {
   const router = useRouter();
 
   const handleEdit = (id: number) => {
-    router.push(`/manages/brand/edit/${id}`);
+    router.push(editPath + id);
   };
 
   const handleDelete = async (id: number) => {
@@ -108,22 +109,22 @@ export default function BrandList() {
           <table className="table w-full">
             <thead>
               <tr>
-                <th>ลำดับ</th>
-                <th>ชื่อแบรนด์</th>
-                <th>รูปภาพ</th>
-                <th>การใช้งาน</th>
-                <th>สถานะ</th>
-                <th>จัดการ</th>
+                <th className="text-center">ลำดับ</th>
+                <th className="text-center">ชื่อแบรนด์</th>
+                <th className="text-center">รูปภาพ</th>
+                <th className="text-center">การใช้งาน</th>
+                <th className="text-center">สถานะ</th>
+                <th className="text-center">จัดการ</th>
               </tr>
             </thead>
             <tbody>
               {brands.map((brand) => (
-                <tr key={brand.id}>
+                <tr key={brand.id} className="text-center align-middle">
                   <td>{brand.id}</td>
                   <td className="font-medium">{brand.name || "-"}</td>
                   <td>
-                    <div className="avatar">
-                      <div className="mask mask-squircle w-12 h-12">
+                    <div className="avatar flex justify-center">
+                      <div className="mask mask-squircle w-24 h-24">
                         <img
                           src={
                             brand.imageUrl
@@ -131,6 +132,7 @@ export default function BrandList() {
                               : "/placeholder.png"
                           }
                           alt="รูปภาพแบรนด์"
+                          className="object-cover"
                         />
                       </div>
                     </div>
@@ -152,31 +154,33 @@ export default function BrandList() {
                       {brand.isDelete ? "ลบแล้ว" : "ปกติ"}
                     </span>
                   </td>
-                  <td className="flex gap-2">
-                    <button
-                      className="btn btn-sm btn-outline btn-warning"
-                      onClick={() => handleEdit(brand.id)}
-                    >
-                      แก้ไข
-                    </button>
-                    <button
-                      className="btn btn-sm btn-outline btn-error"
-                      onClick={() => handleDelete(brand.id)}
-                    >
-                      ลบ
-                    </button>
+                  <td>
+                    <div className="flex justify-center gap-2">
+                      <button
+                        className="btn btn-sm btn-outline btn-warning"
+                        onClick={() => handleEdit(brand.id)}
+                      >
+                        แก้ไข
+                      </button>
+                      <button
+                        className="btn btn-sm btn-outline btn-error"
+                        onClick={() => handleDelete(brand.id)}
+                      >
+                        ลบ
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
             <tfoot>
               <tr>
-                <th>ลำดับ</th>
-                <th>ชื่อแบรนด์</th>
-                <th>รูปภาพ</th>
-                <th>ใช้งาน</th>
-                <th>สถานะ</th>
-                <th>จัดการ</th>
+                <th className="text-center">ลำดับ</th>
+                <th className="text-center">ชื่อแบรนด์</th>
+                <th className="text-center">รูปภาพ</th>
+                <th className="text-center">การใช้งาน</th>
+                <th className="text-center">สถานะ</th>
+                <th className="text-center">จัดการ</th>
               </tr>
             </tfoot>
           </table>

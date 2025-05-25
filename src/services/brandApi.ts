@@ -1,4 +1,4 @@
- import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { baseUrlAPI } from "../utility/SD";
 import { BrandDto } from "@/@types/dto/BrandDto";
 import { PaginationMeta } from "@/@types/Responsts/PaginationMeta";

@@ -1,0 +1,28 @@
+import * as Yup from "yup";
+
+export const createValidationSchema = Yup.object().shape({
+  brandId: Yup.number().required("กรุณาเลือกยี่ห้อ"),
+  sellerId: Yup.number().required("กรุณาเลือกผู้ขาย"),
+
+  carRegistrationNumber: Yup.string().required("กรุณากรอกหมายเลขทะเบียนรถ"),
+  carIdentificationNumber: Yup.string(),
+  engineNumber: Yup.string(),
+  model: Yup.string().required("กรุณากรอกรุ่นรถ"),
+  year: Yup.number().required("กรุณากรอกปีที่ผลิต"),
+  price: Yup.number().required("กรุณากรอกราคา"),
+  mileage: Yup.number().required("กรุณากรอกระยะทาง"),
+  color: Yup.string().required("กรุณากรอกสี"),
+
+  engineType: Yup.number().required("กรุณาเลือกประเภทเครื่องยนต์"),
+  gearType: Yup.number().required("กรุณาเลือกประเภทเกียร์"),
+  carType: Yup.number().required("กรุณาเลือกประเภทของรถ"),
+  status: Yup.number().required("กรุณาเลือกสถานะ"),
+
+  description: Yup.string(),
+  imageFile: Yup.mixed().nullable(),
+});
+
+export const updateValidationSchema = createValidationSchema.shape({
+  isUsed: Yup.boolean(),
+  isDelete: Yup.boolean(),
+});

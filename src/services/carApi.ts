@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { baseUrlAPI } from "../utility/SD";
 import { CarDto } from "@/@types/dto/CarDto";
@@ -15,13 +13,12 @@ const carApi = createApi({
   }),
   tagTypes: ["Car"],
   endpoints: (builder) => ({
-
     getCarAll: builder.query<
       { result: CarDto[]; meta: PaginationMeta },
       CarSearchParams
     >({
       query: (params) => ({
-        url: "cars",
+        url: "cars/getall",
         method: "GET",
         params,
       }),
@@ -34,7 +31,7 @@ const carApi = createApi({
 
     getCarById: builder.query<CarDto, number>({
       query: (carId) => ({
-        url: `cars/${carId}`,
+        url: `cars/getbyid/${carId}`,
         method: "GET",
       }),
       transformResponse: async (response: ApiResponse<CarDto>) => {
@@ -46,7 +43,7 @@ const carApi = createApi({
 
     createCar: builder.mutation<CarCreateDto, FormData>({
       query: (formData) => ({
-        url: "cars",
+        url: "cars/create",
         method: "POST",
         body: formData,
       }),
@@ -59,10 +56,10 @@ const carApi = createApi({
 
     updateCar: builder.mutation<
       CarCreateDto,
-      { carId: number; formData: FormData }
+      { formData: FormData; carId: number }
     >({
-      query: ({ carId, formData }) => ({
-        url: `cars/${carId}`,
+      query: ({ formData, carId }) => ({
+        url: `cars/update/${carId}`,
         method: "PUT",
         body: formData,
       }),
@@ -75,7 +72,7 @@ const carApi = createApi({
 
     deleteCar: builder.mutation<string, number>({
       query: (id) => ({
-        url: `cars/${id}`,
+        url: `cars/delete/${id}`,
         method: "PUT",
       }),
       transformResponse: (response: ApiResponse<string>) => {
@@ -84,7 +81,6 @@ const carApi = createApi({
       },
       invalidatesTags: ["Car"],
     }),
-    
   }),
 });
 
