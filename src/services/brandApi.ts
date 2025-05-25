@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { baseUrlAPI } from "../utility/SD";
 import { BrandDto } from "@/@types/dto/BrandDto";
 import { PaginationMeta } from "@/@types/Responsts/PaginationMeta";
@@ -13,13 +12,12 @@ const brandApi = createApi({
   }),
   tagTypes: ["Brand"],
   endpoints: (builder) => ({
-
     getBrandAll: builder.query<
       { result: BrandDto[]; meta: PaginationMeta },
       BrandSearchParams
     >({
       query: (params) => ({
-        url: "brands",
+        url: "brands/getall",
         method: "GET",
         params,
       }),
@@ -32,7 +30,7 @@ const brandApi = createApi({
 
     getBrandById: builder.query<BrandDto, number>({
       query: (brandId) => ({
-        url: `brands/${brandId}`,
+        url: `brands/getbyid/${brandId}`,
         method: "GET",
       }),
       transformResponse: async (response: ApiResponse<BrandDto>) => {
@@ -44,7 +42,7 @@ const brandApi = createApi({
 
     createBrand: builder.mutation<BrandDto, FormData>({
       query: (formData) => ({
-        url: "brands",
+        url: "brands/create",
         method: "POST",
         body: formData,
       }),
@@ -57,10 +55,10 @@ const brandApi = createApi({
 
     updateBrand: builder.mutation<
       BrandDto,
-      { brandId: number; formData: FormData }
+      { formData: FormData; brandId: number }
     >({
-      query: ({ brandId, formData }) => ({
-        url: `brands/${brandId}`,
+      query: ({ formData, brandId }) => ({
+        url: `brands/update/${brandId}`,
         method: "PUT",
         body: formData,
       }),
@@ -68,12 +66,12 @@ const brandApi = createApi({
         if (response.result) return response.result;
         throw new Error(response.message);
       },
-      invalidatesTags: (result, error, { brandId }) => [{ type: "Brand", brandId }],
+      invalidatesTags: ["Brand"],
     }),
 
     deleteBrand: builder.mutation<string, number>({
       query: (id) => ({
-        url: `brands/${id}`,
+        url: `brands/delete/${id}`,
         method: "PUT",
       }),
       transformResponse: (response: ApiResponse<string>) => {
@@ -82,7 +80,6 @@ const brandApi = createApi({
       },
       invalidatesTags: ["Brand"],
     }),
-    
   }),
 });
 

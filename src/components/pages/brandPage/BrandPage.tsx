@@ -3,6 +3,7 @@
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppHookState";
 import { useGetBrandAllQuery } from "@/services/brandApi";
 import { setBrands } from "@/stores/slices/brandSlice";
+import { baseUrl } from "@/utility/SD";
 import React, { useEffect } from "react";
 
 export default function BrandPage() {
@@ -48,7 +49,7 @@ export default function BrandPage() {
                 className="border rounded-lg p-4 flex flex-col items-center hover:shadow-md transition"
               >
                 <img
-                  src={brand.imageUrl}
+                  src={baseUrl + brand.imageUrl}
                   alt={brand.name}
                   className="w-16 h-16 object-contain mb-2"
                 />
