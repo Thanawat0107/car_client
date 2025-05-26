@@ -14,7 +14,7 @@ const SearchInput: React.FC<SearchInputProps> = ({ label = "ค้นหา", va
       <input
         type="text"
         placeholder={label}
-        className="w-full border rounded px-3 py-2"
+        className="w-full input input-bordered px-3 py-2"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />

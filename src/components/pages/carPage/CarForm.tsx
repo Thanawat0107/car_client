@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -14,10 +15,41 @@ import {
 } from "@/services/carApi";
 import { baseUrl } from "@/utility/SD";
 import { CarCreateFormValues, CarUpdateFormValues } from "./CarFormValues";
-import { createValidationSchema, updateValidationSchema } from "./validationSchema";
+import {
+  createValidationSchema,
+  updateValidationSchema,
+} from "./validationSchema";
+import { SelectField } from "../selectField/SelectField";
+import { enumToOptionsWithLabels } from "@/utility/enumHelpers";
+import {
+  carTypeLabels,
+  engineTypeLabels,
+  GearTypeLabels,
+  statusLabels,
+} from "../filters/CarFilters";
+import { useGetBrandAllQuery } from "@/services/brandApi";
+import { SelectFieldWithImage } from "../selectField/SelectFieldWithImage";
 
 const MySwal = withReactContent(Swal);
 const redirectPath = "/manages/car";
+const baseInitialValues = {
+  brandId: null,
+  sellerId: 1,
+  carRegistrationNumber: "",
+  carIdentificationNumber: "",
+  engineNumber: "",
+  model: "",
+  year: new Date().getFullYear(),
+  price: 0,
+  mileage: 0,
+  color: "",
+  engineType: 0,
+  gearType: 0,
+  carType: 0,
+  status: 0,
+  description: "",
+  imageFile: null,
+};
 
 export default function CarForm() {
   const router = useRouter();
@@ -29,54 +61,40 @@ export default function CarForm() {
     skip: !isEditMode,
   });
 
+  const { data: brands } = useGetBrandAllQuery({
+    pageNumber: 1,
+    pageSize: 100,
+  });
   const [createCar] = useCreateCarMutation();
   const [updateCar] = useUpdateCarMutation();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const [initialValues, setInitialValues] = useState<
     CarCreateFormValues | CarUpdateFormValues
-  >({
-    brandId: 1,
-    sellerId: 1,
-    carRegistrationNumber: "",
-    carIdentificationNumber: "",
-    engineNumber: "",
-    model: "",
-    year: new Date().getFullYear(),
-    price: 0,
-    mileage: 0,
-    color: "",
-    engineType: 0,
-    gearType: 0,
-    carType: 0,
-    status: 0,
-    description: "",
-    imageFile: null,
-    ...(isEditMode && { isDelete: false, isUsed: false }),
-  });
+  >(
+    isEditMode
+      ? {
+          ...baseInitialValues,
+          isUsed: false,
+          isDeleted: false,
+        }
+      : {
+          ...baseInitialValues,
+          isUsed: false, // คุณอาจจะไม่ต้องใส่ field นี้หากไม่อยู่ใน `CarCreateFormValues`
+          isDeleted: false,
+        }
+  );
 
   useEffect(() => {
     if (isEditMode && result) {
       setInitialValues({
-        brandId: result.brandId,
-        sellerId: result.sellerId,
+        ...result,
         carRegistrationNumber: result.carRegistrationNumber ?? "",
         carIdentificationNumber: result.carIdentificationNumber ?? "",
         engineNumber: result.engineNumber ?? "",
-        model: result.model,
-        year: result.year,
-        price: result.price,
-        mileage: result.mileage,
-        color: result.color,
-        engineType: result.engineType,
-        gearType: result.gearType,
-        carType: result.carType,
-        status: result.status,
         description: result.description ?? "",
         imageFile: null,
-        isUsed: result.isUsed,
-        isDelete: result.isDeleted,
-      });
+      } satisfies CarUpdateFormValues);
     }
   }, [isEditMode, result]);
 
@@ -91,8 +109,8 @@ export default function CarForm() {
   ) => {
     const formData = new FormData();
     Object.entries(values).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && key !== "imageFile") {
-        formData.append(key, value.toString());
+      if (key !== "imageFile") {
+        formData.append(key, String(value ?? ""));
       }
     });
     if (values.imageFile) {
@@ -100,8 +118,6 @@ export default function CarForm() {
     }
 
     if (isEditMode) {
-      formData.append("isUsed", String((values as CarUpdateFormValues).isUsed));
-      formData.append("isDelete", String((values as CarUpdateFormValues).isDelete));
       await updateCar({ carId: Number(carId), formData }).unwrap();
       await showAlert("อัปเดตรถสำเร็จ");
     } else {
@@ -133,15 +149,6 @@ export default function CarForm() {
     }
   };
 
-  const enumOptions = (e: object) =>
-    Object.entries(e)
-      .filter(([key]) => isNaN(Number(key)))
-      .map(([key, value]) => (
-        <option key={value} value={value}>
-          {key}
-        </option>
-      ));
-
   const formik = useFormik<CarCreateFormValues | CarUpdateFormValues>({
     enableReinitialize: true,
     initialValues,
@@ -151,33 +158,105 @@ export default function CarForm() {
     onSubmit: handleSubmit,
   });
 
+  const brandOptions =
+    brands?.result
+      .filter((brand) => brand.isUsed)
+      .map((brand) => ({
+        value: brand.id.toString(),
+        label: brand.name,
+        imageUrl: baseUrl + brand.imageUrl,
+      })) ?? [];
+
   if (isEditMode && isLoading) return <p>กำลังโหลดข้อมูล...</p>;
 
   return (
     <div className="min-h-screen bg-base-200 py-10 px-4">
-      <div className="max-w-5xl mx-auto bg-base-100 shadow-xl rounded-2xl overflow-hidden">
-        <div className="grid grid-cols-1 md:grid-cols-2">
+      <div className="w-full max-w-7xl mx-auto bg-base-100 shadow-xl rounded-2xl overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-2">
+          {/* พรีวิวภาพ */}
           <div className="bg-base-300 p-6 flex items-center justify-center">
             {previewUrl ? (
               <img
                 src={previewUrl}
                 alt="Preview"
-                className="rounded-xl shadow w-full h-80 object-contain bg-white p-2"
+                className="rounded-xl shadow w-full h-96 object-contain bg-white p-2"
               />
             ) : (
-              <div className="w-full h-80 flex items-center justify-center border border-dashed border-gray-400 rounded-xl">
+              <div className="w-full h-96 flex items-center justify-center border border-dashed border-gray-400 rounded-xl">
                 <span className="text-gray-500">ไม่มีภาพ</span>
               </div>
             )}
           </div>
 
+          {/* ฟอร์ม */}
           <div className="p-8">
-            <h2 className="text-2xl font-bold text-center mb-6">
+            <h2 className="text-3xl font-bold text-center mb-8">
               {isEditMode ? "แก้ไขรถยนต์" : "เพิ่มรถยนต์คันใหม่"}
             </h2>
 
-            <form onSubmit={formik.handleSubmit} className="space-y-5">
-              <div>
+            <form
+              onSubmit={formik.handleSubmit}
+              className="grid grid-cols-1 md:grid-cols-2 gap-6"
+            >
+              {/* ยี่ห้อรถ */}
+              <div className="col-span-2 md:col-span-1">
+                <label className="block text-sm font-semibold mb-1">
+                  ยี่ห้อรถยนต์
+                </label>
+                <SelectFieldWithImage
+                  value={formik.values.brandId ?? ""}
+                  onChange={(val) => formik.setFieldValue("brandId", val)}
+                  options={brandOptions}
+                />
+              </div>
+
+              {/* ป้ายทะเบียน */}
+              <div className="col-span-2 md:col-span-1">
+                <label className="block text-sm font-semibold mb-1">
+                  เลขทะเบียนเดิมรถยนต์
+                </label>
+                <input
+                  type="text"
+                  name="carRegistrationNumber"
+                  placeholder="กรอกป้ายทะเบียน เช่น กค-8888 กทมท"
+                  value={formik.values.carRegistrationNumber}
+                  onChange={formik.handleChange}
+                  className="input input-bordered w-full"
+                />
+              </div>
+
+              {/* หมายเลขตัวถัง */}
+              <div className="col-span-2 md:col-span-1">
+                <label className="block text-sm font-semibold mb-1">
+                  หมายเลขตัวถัง (VIN) จำนวนของหมายเลขตัวถังทั้ง 17 หลัก
+                </label>
+                <input
+                  type="text"
+                  name="carIdentificationNumber"
+                  placeholder="กรอก เช่น MNBAXXMAWAFJ9***2"
+                  value={formik.values.carIdentificationNumber}
+                  onChange={formik.handleChange}
+                  className="input input-bordered w-full"
+                />
+              </div>
+
+              {/* เลขเครื่องยนต์ */}
+              <div className="col-span-2 md:col-span-1">
+                <label className="block text-sm font-semibold mb-1">
+                  หมายเลขเครื่องยนต์ เริ่มต้นด้วยชื่อรหัสเครื่องยนต์ (เช่น 1NZ, HR15, 4JJ1)
+                </label>
+                <input
+                  type="text"
+                  name="engineNumber"
+                  placeholder="จำนวนไม่แน่นอน 7-12 หลัก 1NZ1234567"
+                  value={formik.values.engineNumber}
+                  onChange={formik.handleChange}
+                  className="input input-bordered w-full"
+                />
+              </div>
+
+              {/* รุ่นรถ */}
+              <div className="col-span-2 md:col-span-1">
                 <label className="block text-sm font-semibold mb-1">
                   รุ่นรถ
                 </label>
@@ -191,21 +270,23 @@ export default function CarForm() {
                 />
               </div>
 
-              <div>
+              {/* ปีที่ผลิตรถ */}
+              <div className="col-span-2 md:col-span-1">
                 <label className="block text-sm font-semibold mb-1">
-                  ปีที่ผลิต
+                  ปีที่ผลิตรถ
                 </label>
                 <input
                   type="number"
                   name="year"
-                  placeholder="กรอกปีที่ผลิต"
+                  placeholder="กรอกปีที่ผลิตรถ"
                   value={formik.values.year}
                   onChange={formik.handleChange}
                   className="input input-bordered w-full"
                 />
               </div>
 
-              <div>
+              {/* ราคารถยนต์ */}
+              <div className="col-span-2 md:col-span-1">
                 <label className="block text-sm font-semibold mb-1">
                   ราคารถยนต์
                 </label>
@@ -219,80 +300,106 @@ export default function CarForm() {
                 />
               </div>
 
-              <div>
+              {/* เลขไมล์ */}
+              <div className="col-span-2 md:col-span-1">
                 <label className="block text-sm font-semibold mb-1">
-                  เลขไมล์ระยะทาง
+                  เลขไมล์ (กม.)
                 </label>
                 <input
                   type="number"
                   name="mileage"
-                  placeholder="หรอกเลขไมล์"
+                  placeholder="กรอกเลขไมล์"
                   value={formik.values.mileage}
                   onChange={formik.handleChange}
                   className="input input-bordered w-full"
                 />
               </div>
 
-              <div>
+              {/* สีรถ */}
+              <div className="col-span-2 md:col-span-1">
                 <label className="block text-sm font-semibold mb-1">
                   สีรถยนต์
                 </label>
                 <input
                   type="text"
                   name="color"
-                  placeholder="กรอกสีรถ"
+                  placeholder="เช่น ขาว, ดำ"
                   value={formik.values.color}
                   onChange={formik.handleChange}
                   className="input input-bordered w-full"
                 />
               </div>
 
-              <div>
+              <div className="col-span-2 md:col-span-1">
                 <label className="block text-sm font-semibold mb-1">
-                  ประเภทเครื่องยนต์
+                  เครื่องยนต์
                 </label>
-                <select
-                  name="engineType"
-                  value={formik.values.engineType}
-                  onChange={formik.handleChange}
-                  className="select select-bordered w-full"
-                >
-                  <option value="">เลือกประเภทเครื่องยนต์</option>
-                  {enumOptions(EngineType)}
-                </select>
+                <SelectField
+                  value={formik.values.engineType?.toString()}
+                  onChange={(v) =>
+                    formik.setFieldValue(
+                      "engineType",
+                      v === "" ? undefined : Number(v)
+                    )
+                  }
+                  options={enumToOptionsWithLabels(
+                    EngineType,
+                    engineTypeLabels
+                  )}
+                />
               </div>
 
-              <div>
+               <div className="col-span-2 md:col-span-1">
                 <label className="block text-sm font-semibold mb-1">
-                  รูปแบบเกียร์รถยนต์
+                  เกียร์รถยนต์
                 </label>
-                <select
-                  name="gearType"
-                  value={formik.values.gearType}
-                  onChange={formik.handleChange}
-                  className="select select-bordered w-full"
-                >
-                  <option value="">เลือกเกียร์</option>
-                  {enumOptions(GearType)}
-                </select>
+                <SelectField
+                  value={formik.values.gearType?.toString()}
+                  onChange={(v) =>
+                    formik.setFieldValue(
+                      "gearType",
+                      v === "" ? undefined : Number(v)
+                    )
+                  }
+                  options={enumToOptionsWithLabels(GearType, GearTypeLabels)}
+                />
               </div>
 
-              <div>
+               <div className="col-span-2 md:col-span-1">
                 <label className="block text-sm font-semibold mb-1">
                   ประเภทรถยนต์
                 </label>
-                <select
-                  name="carType"
-                  value={formik.values.carType}
-                  onChange={formik.handleChange}
-                  className="select select-bordered w-full"
-                >
-                  <option value="">เลือกประเภทรถ</option>
-                  {enumOptions(CarType)}
-                </select>
+                <SelectField
+                  value={formik.values.carType?.toString()}
+                  onChange={(v) =>
+                    formik.setFieldValue(
+                      "carType",
+                      v === "" ? undefined : Number(v)
+                    )
+                  }
+                  options={enumToOptionsWithLabels(CarType, carTypeLabels)}
+                  placeholder="เลือกประเภทรถของคุณ"
+                />
               </div>
 
-              <div>
+              <div className="col-span-2 md:col-span-1">
+                <label className="block text-sm font-semibold mb-1">
+                  สถานะรถ
+                </label>
+                <SelectField
+                  value={formik.values.status?.toString()}
+                  onChange={(v) =>
+                    formik.setFieldValue(
+                      "status",
+                      v === "" ? undefined : Number(v)
+                    )
+                  }
+                  options={enumToOptionsWithLabels(Status, statusLabels)}
+                  placeholder="เลือกสถานะรถ"
+                />
+              </div>
+
+              <div className="col-span-2 md:col-span-1">
                 <label className="block text-sm font-semibold mb-1">
                   คำอธิบายเพิ่มเติม
                 </label>
@@ -306,49 +413,56 @@ export default function CarForm() {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold mb-1">
-                  สถานะรถ
-                </label>
-                <select
-                  name="status"
-                  value={formik.values.status}
-                  onChange={formik.handleChange}
-                  className="select select-bordered w-full"
-                >
-                  <option value="">สถานะ</option>
-                  {enumOptions(Status)}
-                </select>
-              </div>
-
               {isEditMode && (
-                <label className="label cursor-pointer">
-                  <span className="label-text text-red-500">ลบรถนี้</span>
-                  <input
-                    type="checkbox"
-                    name="isDelete"
-                    checked={formik.values.}
-                    onChange={formik.handleChange}
-                    className="checkbox checkbox-error ml-2"
-                  />
-                </label>
+              <div className="col-span-2 md:col-span-1">
+                  <label className="label cursor-pointer">
+                    <span className="label-text">รถใช้งานแล้ว</span>
+                    <input
+                      type="checkbox"
+                      name="isUsed"
+                      checked={(formik.values as CarUpdateFormValues).isUsed}
+                      onChange={formik.handleChange}
+                      className="checkbox ml-2"
+                    />
+                  </label>
+
+                  <label className="label cursor-pointer">
+                    <span className="label-text text-red-500">ลบรถนี้</span>
+                    <input
+                      type="checkbox"
+                      name="isDelete"
+                      checked={(formik.values as CarUpdateFormValues).isDeleted}
+                      onChange={formik.handleChange}
+                      className="checkbox checkbox-error ml-2"
+                    />
+                  </label>
+                </div>
               )}
 
-              <input
-                type="file"
-                name="image"
-                accept="image/*"
-                className="file-input file-input-bordered w-full"
-                onChange={handleImageChange}
-              />
+              {/* อัปโหลดรูป */}
+              <div className="col-span-2">
+                <label className="block text-sm font-semibold mb-1">
+                  อัปโหลดภาพรถยนต์
+                </label>
+                <input
+                  type="file"
+                  name="image"
+                  accept="image/*"
+                  className="file-input file-input-bordered w-full"
+                  onChange={handleImageChange}
+                />
+              </div>
 
-              <button
-                type="submit"
-                className="btn btn-primary w-full"
-                disabled={formik.isSubmitting}
-              >
-                {isEditMode ? "อัปเดต" : "บันทึก"}
-              </button>
+              {/* ปุ่ม Submit */}
+              <div className="col-span-2">
+                <button
+                  type="submit"
+                  className="btn btn-primary w-full"
+                  disabled={formik.isSubmitting}
+                >
+                  {isEditMode ? "อัปเดตรถยนต์" : "บันทึกรถยนต์"}
+                </button>
+              </div>
             </form>
           </div>
         </div>

@@ -1,15 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-export interface Option {
-  label: string;
-  value: string;
-}
 
-export const enumToOptions = (e: any): { label: string; value: string }[] => {
-  return Object.keys(e)
-    .filter((key) => isNaN(Number(key)))
-    .map((key) => ({
-      label: key,
-      value: e[key].toString(),
-    }));
+export const enumToOptionsWithLabels = (
+  enumObj: any,
+  labels: Record<string, string>
+): { label: string; value: string }[] => {
+  return Object.keys(enumObj)
+    .filter((key) => !isNaN(Number(key))) // รับเฉพาะ numeric keys
+    .map((key) => {
+      const enumKey = enumObj[key]; // eg. "Manual"
+      return {
+        value: key, // eg. "0"
+        label: labels[enumKey] || enumKey, // eg. "ด้วยมือ"
+      };
+    });
 };

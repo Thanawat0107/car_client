@@ -10,8 +10,8 @@ import {
   sortOptions,
   Status,
 } from "@/@types/Enum";
-import { enumToOptions } from "@/utility/enumHelpers";
 import SearchInput from "../searchInput/SearchInput";
+import { enumToOptionsWithLabels } from "@/utility/enumHelpers";
 
 interface CarFiltersProps {
   filters: CarSearchParams;
@@ -19,6 +19,28 @@ interface CarFiltersProps {
   search: string;
   setSearch: (value: string) => void;
 }
+
+  export const engineTypeLabels = {
+    Gasoline: "น้ำมันเบนซิน",
+    Diesel: "ดีเซล",
+    Electric: "ไฟฟ้า",
+    Hybrid: "ลูกผสม",
+  };
+  export const GearTypeLabels = {
+    Manual: "ด้วยมือ",
+    Automatic: "อัตโนมัติ",
+  };
+  export const carTypeLabels = {
+    FourDoorSedan: "รถเก๋งสี่ประตู",
+    PickUpTruck: "รถปิกอัพ",
+    CarSUV: "รถยนต์ SUV",
+    CarVan: "รถตู้",
+  };
+  export const statusLabels = {
+    Available: "มีอยู่",
+    Sold: "ขายแล้ว",
+    Reserved: "จองแล้ว",
+  };
 
 const CarFilters: FC<CarFiltersProps> = ({
   filters,
@@ -37,9 +59,9 @@ const CarFilters: FC<CarFiltersProps> = ({
     });
     setSearch("");
   };
+
   return (
     <div className="bg-white shadow-md rounded-lg p-6 w-full">
-
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
         <h2 className="text-lg font-semibold text-gray-700">🔍 ค้นหารถยนต์</h2>
 
@@ -102,7 +124,7 @@ const CarFilters: FC<CarFiltersProps> = ({
           onChange={(v) =>
             handleChange("carType", v === "" ? undefined : Number(v))
           }
-          options={enumToOptions(CarType)}
+          options={enumToOptionsWithLabels(CarType, carTypeLabels)}
         />
 
         <SelectField
@@ -111,7 +133,7 @@ const CarFilters: FC<CarFiltersProps> = ({
           onChange={(v) =>
             handleChange("engineType", v === "" ? undefined : Number(v))
           }
-          options={enumToOptions(EngineType)}
+          options={enumToOptionsWithLabels(EngineType, engineTypeLabels)}
         />
 
         <SelectField
@@ -120,7 +142,7 @@ const CarFilters: FC<CarFiltersProps> = ({
           onChange={(v) =>
             handleChange("gearType", v === "" ? undefined : Number(v))
           }
-          options={enumToOptions(GearType)}
+          options={enumToOptionsWithLabels(GearType, GearTypeLabels)}
         />
 
         <SelectField
@@ -129,7 +151,8 @@ const CarFilters: FC<CarFiltersProps> = ({
           onChange={(v) =>
             handleChange("status", v === "" ? undefined : Number(v))
           }
-          options={enumToOptions(Status)}
+          options={enumToOptionsWithLabels(Status, statusLabels)}
+          placeholder="เลือกสถานะรถ"
         />
 
         <SelectField

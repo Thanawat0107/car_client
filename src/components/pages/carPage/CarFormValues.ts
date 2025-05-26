@@ -1,5 +1,7 @@
-export interface CarCreateFormValues {
-  brandId: number;
+/* eslint-disable @typescript-eslint/no-empty-object-type */
+
+interface BaseCarFormValues {
+  brandId: number | null;
   sellerId: number;
 
   carRegistrationNumber: string;
@@ -15,12 +17,14 @@ export interface CarCreateFormValues {
   gearType: number;
   carType: number;
   status: number;
-  
+
   description?: string;
   imageFile: File | null;
 }
 
-export interface CarUpdateFormValues extends CarCreateFormValues {
+export interface CarCreateFormValues extends BaseCarFormValues {}
+
+export interface CarUpdateFormValues extends BaseCarFormValues {
   isUsed: boolean;
-  isDelete: boolean;
+  isDeleted: boolean;
 }

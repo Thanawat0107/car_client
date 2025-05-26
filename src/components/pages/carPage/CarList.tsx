@@ -12,6 +12,7 @@ import { CarSearchParams } from "@/@types/RequestHelpers/CarSearchParams";
 import Pagination from "../pagination/Pagination";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
+import { baseUrl } from "@/utility/SD";
 
 const MySwal = withReactContent(Swal);
 const createPath = "/manages/car/create";
@@ -132,7 +133,7 @@ export default function CarList() {
                     <div className="avatar flex justify-center">
                       <div className="mask mask-squircle w-24 h-24">
                         <img
-                          src={car.imageUrl || "/placeholder.png"}
+                          src={baseUrl + car.imageUrl || "/placeholder.png"}
                           alt="รูปภาพรถ"
                           className="object-cover"
                         />
