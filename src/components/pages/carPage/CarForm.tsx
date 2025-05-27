@@ -33,7 +33,7 @@ import { SelectFieldWithImage } from "../selectField/SelectFieldWithImage";
 const MySwal = withReactContent(Swal);
 const redirectPath = "/manages/car";
 const baseInitialValues = {
-  brandId: null,
+  brandId: "",
   sellerId: 1,
   carRegistrationNumber: "",
   carIdentificationNumber: "",
@@ -89,6 +89,7 @@ export default function CarForm() {
     if (isEditMode && result) {
       setInitialValues({
         ...result,
+        brandId: result.brandId?.toString() ?? "",
         carRegistrationNumber: result.carRegistrationNumber ?? "",
         carIdentificationNumber: result.carIdentificationNumber ?? "",
         engineNumber: result.engineNumber ?? "",
@@ -109,10 +110,13 @@ export default function CarForm() {
   ) => {
     const formData = new FormData();
     Object.entries(values).forEach(([key, value]) => {
-      if (key !== "imageFile") {
-        formData.append(key, String(value ?? ""));
-      }
+      if (key === "imageFile") return;
+
+      const finalValue =
+        key === "brandId" ? Number(value).toString() : String(value ?? "");
+      formData.append(key, finalValue);
     });
+
     if (values.imageFile) {
       formData.append("imageFile", values.imageFile);
     }
@@ -204,7 +208,7 @@ export default function CarForm() {
                   ยี่ห้อรถยนต์
                 </label>
                 <SelectFieldWithImage
-                  value={formik.values.brandId ?? ""}
+                  value={formik.values.brandId}
                   onChange={(val) => formik.setFieldValue("brandId", val)}
                   options={brandOptions}
                 />
@@ -243,7 +247,8 @@ export default function CarForm() {
               {/* เลขเครื่องยนต์ */}
               <div className="col-span-2 md:col-span-1">
                 <label className="block text-sm font-semibold mb-1">
-                  หมายเลขเครื่องยนต์ เริ่มต้นด้วยชื่อรหัสเครื่องยนต์ (เช่น 1NZ, HR15, 4JJ1)
+                  หมายเลขเครื่องยนต์ เริ่มต้นด้วยชื่อรหัสเครื่องยนต์ (เช่น 1NZ,
+                  HR15, 4JJ1)
                 </label>
                 <input
                   type="text"
@@ -349,7 +354,7 @@ export default function CarForm() {
                 />
               </div>
 
-               <div className="col-span-2 md:col-span-1">
+              <div className="col-span-2 md:col-span-1">
                 <label className="block text-sm font-semibold mb-1">
                   เกียร์รถยนต์
                 </label>
@@ -365,7 +370,7 @@ export default function CarForm() {
                 />
               </div>
 
-               <div className="col-span-2 md:col-span-1">
+              <div className="col-span-2 md:col-span-1">
                 <label className="block text-sm font-semibold mb-1">
                   ประเภทรถยนต์
                 </label>
@@ -414,20 +419,20 @@ export default function CarForm() {
               </div>
 
               {isEditMode && (
-              <div className="col-span-2 md:col-span-1">
+                <div className="col-span-2 md:col-span-1">
                   <label className="label cursor-pointer">
-                    <span className="label-text">รถใช้งานแล้ว</span>
+                    <span className="label-text">เปิดใช้งานรถคันนี้</span>
                     <input
                       type="checkbox"
                       name="isUsed"
                       checked={(formik.values as CarUpdateFormValues).isUsed}
                       onChange={formik.handleChange}
-                      className="checkbox ml-2"
+                      className="checkbox ml-2 mr-3"
                     />
                   </label>
 
-                  <label className="label cursor-pointer">
-                    <span className="label-text text-red-500">ลบรถนี้</span>
+                  <label className="label cursor-pointer mt-4">
+                    <span className="label-text text-red-500">ลบรถคันนี้</span>
                     <input
                       type="checkbox"
                       name="isDelete"

@@ -1,7 +1,7 @@
 import * as Yup from "yup";
 
 export const createValidationSchema = Yup.object().shape({
-  brandId: Yup.number().required("กรุณาเลือกยี่ห้อรถ").nullable(),
+  brandId: Yup.string().required("กรุณาเลือกยี่ห้อรถยนต์").nullable(),
   sellerId: Yup.number().required("กรุณาเลือกผู้ขาย"),
 
   carRegistrationNumber: Yup.string().required("กรุณากรอกหมายเลขทะเบียนรถ"),
@@ -23,7 +23,7 @@ export const createValidationSchema = Yup.object().shape({
 });
 
 export const updateValidationSchema = Yup.object().shape({
-  brandId: Yup.number().required("กรุณาเลือกยี่ห้อ"),
+  brandId: Yup.string().required("กรุณาเลือกยี่ห้อรถยนต์").nullable(),
   sellerId: Yup.number().required("กรุณาเลือกผู้ขาย"),
 
   carRegistrationNumber: Yup.string().required("กรุณากรอกหมายเลขทะเบียนรถ"),

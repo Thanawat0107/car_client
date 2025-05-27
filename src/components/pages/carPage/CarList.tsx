@@ -42,7 +42,7 @@ export default function CarList() {
   const [deleteCar] = useDeleteCarMutation();
   const router = useRouter();
 
-    const handleEdit = (id: number) => {
+  const handleEdit = (id: number) => {
     router.push(editPath + id);
   };
 
@@ -107,10 +107,10 @@ export default function CarList() {
             <thead>
               <tr>
                 <th className="text-center">ลำดับ</th>
-                <th className="text-center">รถยนต์คันนี้</th>
-                <th className="text-center">ทะเบียน</th>
+                <th className="text-center">แบรนด์</th>
+                <th className="text-center">ป้ายทะเบียน</th>
                 <th className="text-center">รุ่น</th>
-                <th className="text-center">ปี</th>
+                <th className="text-center">ปีผลิต</th>
                 <th className="text-center">สี</th>
                 <th className="text-center">ราคา</th>
                 <th className="text-center">รูปภาพ</th>

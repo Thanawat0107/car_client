@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 
 interface BaseCarFormValues {
-  brandId: number | null;
+  brandId: string;
   sellerId: number;
 
   carRegistrationNumber: string;

@@ -4,7 +4,6 @@ import { CarDto } from "@/@types/dto/CarDto";
 import { PaginationMeta } from "@/@types/Responsts/PaginationMeta";
 import { CarSearchParams } from "@/@types/RequestHelpers/CarSearchParams";
 import { ApiResponse } from "@/@types/Responsts/ApiResponse";
-import { CarCreateDto } from "@/@types/dto/create-dto/CarCreateDto";
 
 const carApi = createApi({
   reducerPath: "carApi",
@@ -22,6 +21,7 @@ const carApi = createApi({
         method: "GET",
         params,
       }),
+      keepUnusedDataFor: 300, // cache นานขึ้น 5 นาที
       transformResponse: async (response: ApiResponse<CarDto[]>) => ({
         result: response.result ?? [],
         meta: response.meta as PaginationMeta,
@@ -34,6 +34,7 @@ const carApi = createApi({
         url: `cars/getbyid/${carId}`,
         method: "GET",
       }),
+      keepUnusedDataFor: 300, // cache นานขึ้น 5 นาที
       transformResponse: async (response: ApiResponse<CarDto>) => {
         if (response.result) return response.result;
         throw new Error(response.message);
@@ -41,29 +42,26 @@ const carApi = createApi({
       providesTags: (result, error, carId) => [{ type: "Car", carId }],
     }),
 
-    createCar: builder.mutation<CarCreateDto, FormData>({
+    createCar: builder.mutation<CarDto, FormData>({
       query: (formData) => ({
         url: "cars/create",
         method: "POST",
         body: formData,
       }),
-      transformResponse: (response: ApiResponse<CarCreateDto>) => {
+      transformResponse: (response: ApiResponse<CarDto>) => {
         if (response.result) return response.result;
         throw new Error(response.message);
       },
       invalidatesTags: ["Car"],
     }),
 
-    updateCar: builder.mutation<
-      CarCreateDto,
-      { formData: FormData; carId: number }
-    >({
+    updateCar: builder.mutation<CarDto, { formData: FormData; carId: number }>({
       query: ({ formData, carId }) => ({
         url: `cars/update/${carId}`,
         method: "PUT",
         body: formData,
       }),
-      transformResponse: (response: ApiResponse<CarCreateDto>) => {
+      transformResponse: (response: ApiResponse<CarDto>) => {
         if (response.result) return response.result;
         throw new Error(response.message);
       },
@@ -90,6 +88,7 @@ export const {
   useCreateCarMutation,
   useUpdateCarMutation,
   useDeleteCarMutation,
+  usePrefetch,
 } = carApi;
 
 export default carApi;

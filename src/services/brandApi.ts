@@ -21,6 +21,7 @@ const brandApi = createApi({
         method: "GET",
         params,
       }),
+      keepUnusedDataFor: 300, // cache นานขึ้น 5 นาที
       transformResponse: async (response: ApiResponse<BrandDto[]>) => ({
         result: response.result ?? [],
         meta: response.meta as PaginationMeta,
@@ -33,6 +34,7 @@ const brandApi = createApi({
         url: `brands/getbyid/${brandId}`,
         method: "GET",
       }),
+      keepUnusedDataFor: 300, // cache นานขึ้น 5 นาที
       transformResponse: async (response: ApiResponse<BrandDto>) => {
         if (response.result) return response.result;
         throw new Error(response.message);
