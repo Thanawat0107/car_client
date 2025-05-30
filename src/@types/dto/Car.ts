@@ -1,14 +1,14 @@
-import { BrandDto } from "./BrandDto";
+import { Brand } from "./Brand";
 import { CarType, EngineType, GearType, Status } from "../Enum";
-import { SellerDto } from "./SellerDto";
+import { Seller } from "./Seller";
 
-export interface CarDto {
+export interface Car {
   id: number;
 
   sellerId: number;
-  seller: SellerDto;
+  seller: Seller;
   brandId: number;
-  brand: BrandDto;
+  brand: Brand;
 
   carRegistrationNumber?: string;
   carIdentificationNumber?: string;

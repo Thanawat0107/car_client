@@ -1,70 +1,54 @@
-/* eslint-disable @next/next/no-img-element */
-"use client";
-
-import React from "react";
 import { GrCar } from "react-icons/gr";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import RightUserArea from "./RightUserArea";
+import NavLinks from "./NavLinks";
 
-export default function Navber() {
-    const router = useRouter();
+const login = "/";
+
+export default function Navbar() {
   return (
-    <div className="sticky top-0 z-50 flex justify-between bg-[var(--foreground)] p-5 items-center text-white shadow-md">
-      <div className="flex items-center gap-2 text-3xl font-semibold text-[var(--color-accent)]">
+    <div className="sticky top-0 z-50 flex justify-between items-center bg-[var(--foreground)] p-5 text-white shadow-md">
+      {/* Logo */}
+      <div className="flex items-center gap-2 text-xl md:text-2xl lg:text-3xl font-semibold text-[var(--color-accent)] cursor-pointer">
         <GrCar size={34} />
-        <div>รถยนต์มือสอง</div>
+        <Link href={login}>รถยนต์มือสอง</Link>
       </div>
 
+      {/* Desktop menu */}
       <div className="navbar-center hidden lg:flex absolute left-1/2 transform -translate-x-1/2">
         <ul className="menu menu-horizontal px-1">
-          <li>
-             <a onClick={() => router.push("/")}>หน้าแรก</a>
-          </li>
-          <li>
-            <a  onClick={() => router.push("/")} >ซื้อรถยนต์</a>
-          </li>
-          <li>
-            <a  onClick={() => router.push("/")}>ขายรถยนต์</a>
-          </li>
-          <li>
-            <a  onClick={() => router.push("/")}>คำนวณค่างวด</a>
-          </li>
-          <li>
-            <details>
-              <summary>การจัดการ</summary>
-              <ul className="p-2 bg-[var(--color-neutral)]">
-                <li>
-                  <a  onClick={() => router.push("/manages/brand")}>จัดการยี่ห่อ</a>
-                </li>
-                <li>
-                  <a  onClick={() => router.push("/manages/car")}>จัดการรถยนต์</a>
-                </li>
-              </ul>
-            </details>
-          </li>
+          <NavLinks />
         </ul>
       </div>
 
-      <div className="dropdown dropdown-end">
-      <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar">
-        <div className="w-10 rounded-full">
-          <img
-            alt="Tailwind CSS Navbar component"
-            src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" />
-        </div>
+      {/* Mobile dropdown menu */}
+      <div className="lg:hidden dropdown dropdown-end">
+        <label tabIndex={0} className="btn btn-ghost btn-circle">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 6h16M4 12h16M4 18h16"
+            />
+          </svg>
+        </label>
+        <ul
+          tabIndex={0}
+          className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow rounded-box w-52 text-white bg-[var(--color-neutral)]"
+        >
+          <NavLinks />
+        </ul>
       </div>
-      <ul
-        tabIndex={0}
-        className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
-        <li>
-          <a className="justify-between">
-            Profile
-            <span className="badge">New</span>
-          </a>
-        </li>
-        <li><a>Settings</a></li>
-        <li><a>Logout</a></li>
-      </ul>
-    </div>
+
+      {/* Right user area */}
+      <RightUserArea />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
-import { CarDto } from "@/@types/dto/CarDto";
+import { CarDto } from "@/@types/dto/Car";
 import React from "react";
 
 interface Props {

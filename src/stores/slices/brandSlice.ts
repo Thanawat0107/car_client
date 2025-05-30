@@ -1,9 +1,10 @@
-import { BrandDto } from '@/@types/dto/BrandDto';
+
+import { Brand } from '@/@types/dto/Brand';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface BrandState {
-  brands: BrandDto[];
-  selectedBrand?: BrandDto;
+  brands: Brand[];
+  selectedBrand?: Brand;
   loading: boolean;
   error?: string;
 }
@@ -15,20 +16,20 @@ const initialState: BrandState = {
   error: undefined,
 };
 
-const BrandDtoSlice = createSlice({
-  name: 'BrandDtos',
+const brandSlice = createSlice({
+  name: 'brands',
   initialState,
   reducers: {
-    setBrands(state, action: PayloadAction<BrandDto[]>) {
+    setBrands(state, action: PayloadAction<Brand[]>) {
       state.brands = action.payload;
     },
-    setSelectedBrand(state, action: PayloadAction<BrandDto>) {
+    setSelectedBrand(state, action: PayloadAction<Brand>) {
       state.selectedBrand = action.payload;
     },
-    addBrand(state, action: PayloadAction<BrandDto>) {
+    addBrand(state, action: PayloadAction<Brand>) {
       state.brands.push(action.payload);
     },
-    updateBrand(state, action: PayloadAction<BrandDto>) {
+    updateBrand(state, action: PayloadAction<Brand>) {
       const index = state.brands.findIndex(b => b.id === action.payload.id);
       if (index !== -1) {
         state.brands[index] = action.payload;
@@ -58,6 +59,6 @@ export const {
   setLoading,
   setError,
   clearSelectedBrand,
-} = BrandDtoSlice.actions;
+} = brandSlice.actions;
 
-export default BrandDtoSlice.reducer;
+export default brandSlice.reducer;

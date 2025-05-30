@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { baseUrlAPI } from "../utility/SD";
-import { BrandDto } from "@/@types/dto/BrandDto";
+import { Brand } from "@/@types/dto/Brand";
 import { PaginationMeta } from "@/@types/Responsts/PaginationMeta";
 import { ApiResponse } from "@/@types/Responsts/ApiResponse";
 import { BrandSearchParams } from "@/@types/RequestHelpers/BrandSearchParams";
@@ -13,7 +13,7 @@ const brandApi = createApi({
   tagTypes: ["Brand"],
   endpoints: (builder) => ({
     getBrandAll: builder.query<
-      { result: BrandDto[]; meta: PaginationMeta },
+      { result: Brand[]; meta: PaginationMeta },
       BrandSearchParams
     >({
       query: (params) => ({
@@ -22,33 +22,33 @@ const brandApi = createApi({
         params,
       }),
       keepUnusedDataFor: 300, // cache นานขึ้น 5 นาที
-      transformResponse: async (response: ApiResponse<BrandDto[]>) => ({
+      transformResponse: async (response: ApiResponse<Brand[]>) => ({
         result: response.result ?? [],
         meta: response.meta as PaginationMeta,
       }),
       providesTags: ["Brand"],
     }),
 
-    getBrandById: builder.query<BrandDto, number>({
+    getBrandById: builder.query<Brand, number>({
       query: (brandId) => ({
         url: `brands/getbyid/${brandId}`,
         method: "GET",
       }),
       keepUnusedDataFor: 300, // cache นานขึ้น 5 นาที
-      transformResponse: async (response: ApiResponse<BrandDto>) => {
+      transformResponse: async (response: ApiResponse<Brand>) => {
         if (response.result) return response.result;
         throw new Error(response.message);
       },
       providesTags: (result, error, brandId) => [{ type: "Brand", brandId }],
     }),
 
-    createBrand: builder.mutation<BrandDto, FormData>({
+    createBrand: builder.mutation<Brand, FormData>({
       query: (formData) => ({
         url: "brands/create",
         method: "POST",
         body: formData,
       }),
-      transformResponse: (response: ApiResponse<BrandDto>) => {
+      transformResponse: (response: ApiResponse<Brand>) => {
         if (response.result) return response.result;
         throw new Error(response.message);
       },
@@ -56,7 +56,7 @@ const brandApi = createApi({
     }),
 
     updateBrand: builder.mutation<
-      BrandDto,
+      Brand,
       { formData: FormData; brandId: number }
     >({
       query: ({ formData, brandId }) => ({
@@ -64,7 +64,7 @@ const brandApi = createApi({
         method: "PUT",
         body: formData,
       }),
-      transformResponse: (response: ApiResponse<BrandDto>) => {
+      transformResponse: (response: ApiResponse<Brand>) => {
         if (response.result) return response.result;
         throw new Error(response.message);
       },
@@ -91,6 +91,7 @@ export const {
   useCreateBrandMutation,
   useUpdateBrandMutation,
   useDeleteBrandMutation,
+  usePrefetch
 } = brandApi;
 
 export default brandApi;
