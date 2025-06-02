@@ -29,13 +29,8 @@ export enum Status {
   Reserved = 2,
 }
 
-export const sortOptions = [
-  { value: "id", label: "ล่าสุด" },
-  { value: "price", label: "ราคาต่ำ -> สูง" },
-  { value: "price_desc", label: "ราคาสูง -> ต่ำ" },
-  { value: "year", label: "ปีน้อย -> มาก" },
-  
-  { value: "yearDesc", label: "ปีมาก -> น้อย" },
-  { value: "mileageAsc", label: "ไมล์น้อย -> มาก" },
-  { value: "mileageDesc", label: "ไมล์มาก -> น้อย" },
-];
+export enum StatusTestDrive {
+  Cancel = 0,
+  Pending = 1,
+  Confirmed = 2,
+}

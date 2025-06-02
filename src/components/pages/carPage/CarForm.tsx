@@ -29,6 +29,7 @@ import {
 } from "../filters/CarFilters";
 import { useGetBrandAllQuery } from "@/services/brandApi";
 import { SelectFieldWithImage } from "../selectField/SelectFieldWithImage";
+import { InputField } from "../inputField/InputField";
 
 const MySwal = withReactContent(Swal);
 const redirectPath = "/manages/car";
@@ -41,6 +42,7 @@ const baseInitialValues = {
   model: "",
   year: new Date().getFullYear(),
   price: 0,
+  reservationPrice: 0,
   mileage: 0,
   color: "",
   engineType: 0,
@@ -88,13 +90,25 @@ export default function CarForm() {
   useEffect(() => {
     if (isEditMode && result) {
       setInitialValues({
-        ...result,
         brandId: result.brandId?.toString() ?? "",
+        sellerId: result.sellerId ?? 1,
         carRegistrationNumber: result.carRegistrationNumber ?? "",
         carIdentificationNumber: result.carIdentificationNumber ?? "",
         engineNumber: result.engineNumber ?? "",
+        model: result.model ?? "",
+        year: result.year ?? new Date().getFullYear(),
+        price: result.price ?? 0,
+        reservationPrice: result.reservationPrice ?? 0,
+        mileage: result.mileage ?? 0,
+        color: result.color ?? "",
+        engineType: result.engineType ?? 0,
+        gearType: result.gearType ?? 0,
+        carType: result.carType ?? 0,
+        status: result.status ?? 0,
         description: result.description ?? "",
         imageFile: null,
+        isUsed: result.isUsed ?? false,
+        isDeleted: result.isDeleted ?? false,
       } satisfies CarUpdateFormValues);
     }
   }, [isEditMode, result]);
@@ -302,6 +316,19 @@ export default function CarForm() {
                   value={formik.values.price}
                   onChange={formik.handleChange}
                   className="input input-bordered w-full"
+                />
+              </div>
+
+              {/* ราคาจอง */}
+              <div className="col-span-2 md:col-span-1">
+                <label className="block text-sm font-semibold mb-1">
+                  ราคาจองรถยนต์
+                </label>
+                <InputField
+                  name="reservationPrice"
+                  placeholder="กรอกราคาจองรถยนต์"
+                  value={formik.values.reservationPrice}
+                  onChange={formik.handleChange}
                 />
               </div>
 

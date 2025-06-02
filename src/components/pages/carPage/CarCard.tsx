@@ -1,36 +1,43 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
-import { CarDto } from "@/@types/dto/Car";
+import { Car } from "@/@types/dto/Car";
+import { baseUrl } from "@/utility/SD";
+import { useRouter } from "next/navigation";
 import React from "react";
 
 interface Props {
-  car: CarDto;
+  car: Car;
 }
 
 export default function CarCard({ car }: Props) {
+  const router = useRouter();
+
+   const handleClick = () => {
+    router.push(`/car/${car.id}`);
+  };
+
   return (
-    <div className="w-80 bg-gray-100 rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-      <div className="relative">
+    <div className="bg-gray-100 rounded-xl shadow hover:shadow-md transition-shadow duration-300 w-full">
+      <div className="relative" onClick={handleClick}>
         <img
-          src={car.imageUrl}
+          src={baseUrl + car.imageUrl}
           alt={car.model}
-          className="h-48 w-full object-cover"
+          className="aspect-[4/3] w-full object-cover rounded-t-xl"
         />
         <span className="absolute top-2 left-2 bg-[var(--color-accent)] text-white text-xs font-semibold px-2 py-1 rounded">
           TEST DRIVE
         </span>
       </div>
       <div className="p-4">
-        <h2 className="text-base font-semibold mb-1">
+        <h2 className="text-sm font-semibold mb-1 leading-tight">
           {car.year} {car.brand.name} {car.model}
         </h2>
-        <p className="text-sm text-gray-500 mb-2">ไม่รวมภาษีมูลค่าเพิ่ม</p>
-        <p className="text-xl font-bold text-[var(--color-accent)] mb-2">
+        <p className="text-xs text-gray-500 mb-1">ไม่รวมภาษีมูลค่าเพิ่ม</p>
+        <p className="text-lg font-bold text-[var(--color-accent)] mb-2">
           ฿ {car.price.toLocaleString()}
         </p>
 
-        {/* Additional details */}
         <div className="flex flex-wrap text-xs text-gray-600 gap-x-2 gap-y-1">
           <div className="flex items-center gap-1">
             <span>🚗</span>

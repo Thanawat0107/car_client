@@ -10,6 +10,7 @@ export const createValidationSchema = Yup.object().shape({
   model: Yup.string().required("กรุณากรอกรุ่นรถ"),
   year: Yup.number().required("กรุณากรอกปีที่ผลิต"),
   price: Yup.number().required("กรุณากรอกราคา"),
+  reservationPrice: Yup.number().min(0).required("กรุณาระบุราคามัดจำ"),
   mileage: Yup.number().required("กรุณากรอกระยะทาง"),
   color: Yup.string().required("กรุณากรอกสี"),
 
@@ -32,6 +33,7 @@ export const updateValidationSchema = Yup.object().shape({
   model: Yup.string().required("กรุณากรอกรุ่นรถ"),
   year: Yup.number().required("กรุณากรอกปีที่ผลิต"),
   price: Yup.number().required("กรุณากรอกราคา"),
+  reservationPrice: Yup.number().min(0).required("กรุณาระบุราคามัดจำ"),
   mileage: Yup.number().required("กรุณากรอกระยะทาง"),
   color: Yup.string().required("กรุณากรอกสี"),
 

@@ -1,4 +1,4 @@
-import RegisterSellerPage from '@/components/pages/registerSellerPage/RegisterSellerPage'
+import RegisterSellerPage from '@/components/pages/sellerPage/RegisterSellerPage'
 import React from 'react'
 
 export default function page() {

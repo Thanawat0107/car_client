@@ -7,14 +7,15 @@ import { SD_Roles } from "@/@types/Enum";
 
 const staticMenu = [
   { name: "หน้าแรก", path: "/" },
-  { name: "ซื้อรถยนต์", path: "/buy" },
-  { name: "ขายรถยนต์", path: "/sell" },
+  { name: "ซื้อรถยนต์", path: "/car" },
+  { name: "ขายรถยนต์", path: "/manages/car" },
   { name: "คำนวณค่างวด", path: "/loan-calculator" },
 ];
 
 const adminMenu = [
   { name: "จัดการยี่ห้อ", path: "/manages/brand" },
   { name: "จัดการรถยนต์", path: "/manages/car" },
+  { name: "จัดการผู้จำหน่าย", path: "/manages/seller" },
 ];
 
 export default function NavLinks() {

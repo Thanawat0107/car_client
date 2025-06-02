@@ -1,14 +1,22 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @next/next/no-img-element */
+"use client";
 
+import { BrandSearchParams } from "@/@types/RequestHelpers/BrandSearchParams";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppHookState";
 import { useGetBrandAllQuery } from "@/services/brandApi";
 import { setBrands } from "@/stores/slices/brandSlice";
 import { baseUrl } from "@/utility/SD";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { defaultBrandSearchParams } from "./defaultBrandSearchParams";
 
 export default function BrandPage() {
+    const [filters, setFilters] = useState<BrandSearchParams>(
+      defaultBrandSearchParams
+    );
+    
   const dispatch = useAppDispatch();
-  const { data: result, error, isLoading } = useGetBrandAllQuery(null);
+  const { data: result, error, isLoading } = useGetBrandAllQuery(filters);
   const brands = useAppSelector((state) => state.brand.brands);
 
   useEffect(() => {

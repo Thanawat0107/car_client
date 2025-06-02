@@ -40,6 +40,7 @@ export const useAuth = () => {
         dispatch(
           setCredentials({
             ...decoded,
+             userId: decoded.userId,
             userName: decoded.userName,
             token,
           })

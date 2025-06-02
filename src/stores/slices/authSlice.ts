@@ -9,6 +9,7 @@ interface AuthState extends RegisterResponse {
 }
 
 const initialState: AuthState = {
+  userId: "",
   userName: "",
   email: "",
   fullName: "",
@@ -26,7 +27,8 @@ const authSlice = createSlice({
       state,
       action: PayloadAction<RegisterResponse & { token: string }>
     ) => {
-      const { userName, email, fullName, phoneNumber, role, token } = action.payload;
+      const { userName, email, fullName, phoneNumber, role, token, userId } = action.payload;
+      state.userId = userId;
       state.userName = userName;
       state.email = email;
       state.fullName = fullName;
@@ -38,6 +40,7 @@ const authSlice = createSlice({
       localStorage.setItem("token", token);
     },
     logout: (state) => {
+      state.userId = "";
       state.userName = "";
       state.email = "";
       state.fullName = "";

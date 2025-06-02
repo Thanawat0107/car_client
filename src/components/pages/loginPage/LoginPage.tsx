@@ -29,6 +29,7 @@ export default function LoginPage() {
       dispatch(
         setCredentials({
           ...decoded,
+          userId: decoded.userId,
           userName: decoded.userName,
           token,
         })

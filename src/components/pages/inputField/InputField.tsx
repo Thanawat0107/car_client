@@ -1,20 +1,22 @@
-"use client"
+"use client";
 
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import clsx from "clsx";
 
 interface InputFieldProps {
-  label: string;
-  name: string;
+  label?: string;
+  name?: string;
   type?: string;
-  value: string;
+  value: string | number;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
   placeholder?: string;
   error?: string;
   touched?: boolean;
   required?: boolean;
+  readOnly?: boolean;
+  disabled?: boolean; 
 }
 
 export const InputField = ({
@@ -28,6 +30,8 @@ export const InputField = ({
   error,
   touched,
   required = false,
+  readOnly,
+  disabled,
 }: InputFieldProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const isPassword = type === "password";
@@ -54,6 +58,8 @@ export const InputField = ({
           onChange={onChange}
           onBlur={onBlur}
           placeholder={placeholder}
+          readOnly={readOnly}
+          disabled={disabled}
           className={clsx(
             "w-full border rounded-xl px-4 py-3",
             showError

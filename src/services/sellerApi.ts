@@ -4,6 +4,7 @@ import { Seller } from "@/@types/dto/Seller";
 import { PaginationMeta } from "@/@types/Responsts/PaginationMeta";
 import { SellerSearchParams } from "@/@types/RequestHelpers/SellerSearchParams";
 import { ApiResponse } from "@/@types/Responsts/ApiResponse";
+import { SellerCreateFormValues } from "@/components/pages/sellerPage/SellerFormValues";
 
 const sellerApi = createApi({
   reducerPath: "sellerApi",
@@ -42,11 +43,11 @@ const sellerApi = createApi({
       providesTags: (result, error, sellerId) => [{ type: "Seller", sellerId }],
     }),
 
-    createSeller: builder.mutation<Seller, FormData>({
-      query: (formData) => ({
+    createSeller: builder.mutation<Seller, SellerCreateFormValues>({
+      query: (body) => ({
         url: "sellers/create",
         method: "POST",
-        body: formData,
+        body,
       }),
       transformResponse: (response: ApiResponse<Seller>) => {
         if (response.result) return response.result;
@@ -55,17 +56,22 @@ const sellerApi = createApi({
       invalidatesTags: ["Seller"],
     }),
 
-    updateSeller: builder.mutation<Seller, { formData: FormData; sellerId: number }>({
-      query: ({ formData, sellerId }) => ({
+    updateSeller: builder.mutation<
+      Seller,
+      { sellerId: number; sellerData: Seller }
+    >({
+      query: ({ sellerId, sellerData }) => ({
         url: `sellers/update/${sellerId}`,
         method: "PUT",
-        body: formData,
+        body: sellerData,
       }),
       transformResponse: (response: ApiResponse<Seller>) => {
         if (response.result) return response.result;
         throw new Error(response.message);
       },
-      invalidatesTags: (result, error, { sellerId }) => [{ type: "Seller", sellerId }],
+      invalidatesTags: (result, error, { sellerId }) => [
+        { type: "Seller", sellerId },
+      ],
     }),
 
     deleteSeller: builder.mutation<string, number>({

@@ -10,6 +10,7 @@ interface BaseCarFormValues {
   model: string;
   year: number;
   price: number;
+  reservationPrice: number;
   mileage: number;
   color: string;
 

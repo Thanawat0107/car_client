@@ -2,7 +2,7 @@
 @plugin "daisyui";
 
 :root {
---color-primary: #1F3C88;
+  --color-primary: #1F3C88;
   --color-accent: #F9A825;
   --color-neutral: #A1887F;
   --color-text: #333333;
@@ -30,6 +30,7 @@
 
 /* ใช้งานใน body */
 body {
+  height: 100%;
   background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);

@@ -18,21 +18,25 @@ export const SelectField = ({
   options,
   placeholder = "ทั้งหมด",
 }: SelectFieldProps) => (
-  <div>
+  <div className="w-full mb-4">
+    {/* Label */}
     <label className="block text-sm font-medium text-gray-700 mb-1">
       {label}
     </label>
-    <select
-      className="w-full select select-bordered px-3 py-2"
-      value={value || ""}
-      onChange={(e) => onChange(e.target.value)}
-    >
-      <option value="">{placeholder}</option>
-      {options.map((opt) => (
-        <option key={opt.value} value={opt.value}>
-          {opt.label}
-        </option>
-      ))}
-    </select>
+
+    <div className="relative">
+      <select
+        className="w-full border rounded-xl px-4 py-3 border-gray-300 focus:outline-neutral"
+        value={value || ""}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        <option value="">{placeholder}</option>
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+    </div>
   </div>
 );

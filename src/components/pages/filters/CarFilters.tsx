@@ -3,13 +3,7 @@ import { CarSearchParams } from "@/@types/RequestHelpers/CarSearchParams";
 import { FC } from "react";
 import { InputField } from "../inputField/InputField";
 import { SelectField } from "../selectField/SelectField";
-import {
-  CarType,
-  EngineType,
-  GearType,
-  sortOptions,
-  Status,
-} from "@/@types/Enum";
+import { CarType, EngineType, GearType, Status } from "@/@types/Enum";
 import SearchInput from "../searchInput/SearchInput";
 import { enumToOptionsWithLabels } from "@/utility/enumHelpers";
 
@@ -20,27 +14,37 @@ interface CarFiltersProps {
   setSearch: (value: string) => void;
 }
 
-  export const engineTypeLabels = {
-    Gasoline: "น้ำมันเบนซิน",
-    Diesel: "ดีเซล",
-    Electric: "ไฟฟ้า",
-    Hybrid: "ลูกผสม",
-  };
-  export const GearTypeLabels = {
-    Manual: "ด้วยมือ",
-    Automatic: "อัตโนมัติ",
-  };
-  export const carTypeLabels = {
-    FourDoorSedan: "รถเก๋งสี่ประตู",
-    PickUpTruck: "รถปิกอัพ",
-    CarSUV: "รถยนต์ SUV",
-    CarVan: "รถตู้",
-  };
-  export const statusLabels = {
-    Available: "มีอยู่",
-    Sold: "ขายแล้ว",
-    Reserved: "จองแล้ว",
-  };
+const sortOptions = [
+  { value: "id", label: "ล่าสุด" },
+  { value: "price", label: "ราคาต่ำ -> สูง" },
+  { value: "price_desc", label: "ราคาสูง -> ต่ำ" },
+  { value: "year", label: "ปีน้อย -> มาก" },
+  { value: "yearDesc", label: "ปีมาก -> น้อย" },
+  { value: "mileageAsc", label: "ไมล์น้อย -> มาก" },
+  { value: "mileageDesc", label: "ไมล์มาก -> น้อย" },
+];
+
+export const engineTypeLabels = {
+  Gasoline: "น้ำมันเบนซิน",
+  Diesel: "ดีเซล",
+  Electric: "ไฟฟ้า",
+  Hybrid: "ลูกผสม",
+};
+export const GearTypeLabels = {
+  Manual: "ด้วยมือ",
+  Automatic: "อัตโนมัติ",
+};
+export const carTypeLabels = {
+  FourDoorSedan: "รถเก๋งสี่ประตู",
+  PickUpTruck: "รถปิกอัพ",
+  CarSUV: "รถยนต์ SUV",
+  CarVan: "รถตู้",
+};
+export const statusLabels = {
+  Available: "มีอยู่",
+  Sold: "ขายแล้ว",
+  Reserved: "จองแล้ว",
+};
 
 const CarFilters: FC<CarFiltersProps> = ({
   filters,
@@ -49,13 +53,29 @@ const CarFilters: FC<CarFiltersProps> = ({
   setSearch,
 }) => {
   const handleChange = (field: keyof CarSearchParams, value: any) => {
-    setFilters({ ...filters, [field]: value, pageNumber: 1 });
+    let parsedValue: any;
+
+    if (
+      field === "minPrice" ||
+      field === "maxPrice" ||
+      field === "minYear" ||
+      field === "maxYear" ||
+      field === "minMileage" ||
+      field === "maxMileage"
+    ) {
+      parsedValue = value === "" ? undefined : Number(value);
+      if (isNaN(parsedValue)) parsedValue = undefined;
+    } else {
+      parsedValue = value;
+    }
+
+    setFilters({ ...filters, [field]: parsedValue, pageNumber: 1 });
   };
 
   const handleReset = () => {
     setFilters({
       pageNumber: 1,
-      pageSize: 3,
+      pageSize: 5,
     });
     setSearch("");
   };
@@ -87,35 +107,57 @@ const CarFilters: FC<CarFiltersProps> = ({
 
         <InputField
           label="ราคาเริ่มต้น"
-          value={filters.minPrice}
-          onChange={(v: any) => handleChange("minPrice", v)}
+          type="number"
+          value={
+            filters.minPrice !== undefined ? filters.minPrice.toString() : ""
+          }
+          onChange={(e) => handleChange("minPrice", e.target.value)}
         />
         <InputField
           label="ราคาสูงสุด"
-          value={filters.maxPrice}
-          onChange={(v: any) => handleChange("maxPrice", v)}
+          type="number"
+          value={
+            filters.maxPrice !== undefined ? filters.maxPrice.toString() : ""
+          }
+          onChange={(e) => handleChange("maxPrice", e.target.value)}
         />
 
         <InputField
           label="ปีเริ่มต้น"
-          value={filters.minYear}
-          onChange={(v: any) => handleChange("minYear", v)}
+          type="number"
+          value={
+            filters.minYear !== undefined ? filters.minYear.toString() : ""
+          }
+          onChange={(e) => handleChange("minYear", e.target.value)}
         />
         <InputField
           label="ปีสูงสุด"
-          value={filters.maxYear}
-          onChange={(v: any) => handleChange("maxYear", v)}
+          type="number"
+          value={
+            filters.maxYear !== undefined ? filters.maxYear.toString() : ""
+          }
+          onChange={(e) => handleChange("maxYear", e.target.value)}
         />
 
         <InputField
           label="ไมล์ต่ำสุด"
-          value={filters.minMileage}
-          onChange={(v: any) => handleChange("minMileage", v)}
+          type="number"
+          value={
+            filters.minMileage !== undefined
+              ? filters.minMileage.toString()
+              : ""
+          }
+          onChange={(e) => handleChange("minMileage", e.target.value)}
         />
         <InputField
           label="ไมล์สูงสุด"
-          value={filters.maxMileage}
-          onChange={(v: any) => handleChange("maxMileage", v)}
+          type="number"
+          value={
+            filters.maxMileage !== undefined
+              ? filters.maxMileage.toString()
+              : ""
+          }
+          onChange={(e) => handleChange("maxMileage", e.target.value)}
         />
 
         <SelectField

@@ -4,4 +4,5 @@ export interface RegisterResponse {
   fullName: string;
   phoneNumber: string;
   role: string;
+  userId: string;
 }

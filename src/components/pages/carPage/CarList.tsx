@@ -113,6 +113,7 @@ export default function CarList() {
                 <th className="text-center">ปีผลิต</th>
                 <th className="text-center">สี</th>
                 <th className="text-center">ราคา</th>
+                <th className="text-center">ราคาจอง</th>
                 <th className="text-center">รูปภาพ</th>
                 <th className="text-center">ใช้งาน</th>
                 <th className="text-center">สถานะ</th>
@@ -129,6 +130,7 @@ export default function CarList() {
                   <td>{car.year ?? "-"}</td>
                   <td>{car.color ?? "-"}</td>
                   <td>{car.price.toLocaleString()} ฿</td>
+                  <td>{car.reservationPrice.toLocaleString()} ฿</td>
                   <td>
                     <div className="avatar flex justify-center">
                       <div className="mask mask-squircle w-24 h-24">
@@ -185,6 +187,7 @@ export default function CarList() {
                 <th className="text-center">ปี</th>
                 <th className="text-center">สี</th>
                 <th className="text-center">ราคา</th>
+                <th className="text-center">ราคาจอง</th>
                 <th className="text-center">รูปภาพ</th>
                 <th className="text-center">ใช้งาน</th>
                 <th className="text-center">สถานะ</th>
