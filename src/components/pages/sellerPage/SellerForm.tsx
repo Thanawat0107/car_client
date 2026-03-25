@@ -13,7 +13,7 @@ import {
   useUpdateSellerMutation,
 } from "@/services/sellerApi";
 import { validationSchema } from "./validationSchema";
-import { Seller } from "@/@types/dto/Seller";
+import { Seller } from "@/@types/Dto/Seller";
 import {
   SellerCreateFormValues,
   SellerUpdateFormValues,

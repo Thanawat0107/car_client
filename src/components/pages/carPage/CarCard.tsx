@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
-import { Car } from "@/@types/dto/Car";
+import { Car } from "@/@types/Dto/Car";
 import { baseUrl } from "@/utility/SD";
 import { useRouter } from "next/navigation";
 import React from "react";

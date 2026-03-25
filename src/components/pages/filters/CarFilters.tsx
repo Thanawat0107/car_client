@@ -3,7 +3,7 @@ import { CarSearchParams } from "@/@types/RequestHelpers/CarSearchParams";
 import { FC } from "react";
 import { InputField } from "../inputField/InputField";
 import { SelectField } from "../selectField/SelectField";
-import { CarType, EngineType, GearType, Status } from "@/@types/Enum";
+import { CarType, EngineType, GearType, Status } from "@/@types/Status";
 import SearchInput from "../searchInput/SearchInput";
 import { enumToOptionsWithLabels } from "@/utility/enumHelpers";
 

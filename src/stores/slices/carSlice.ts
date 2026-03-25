@@ -1,4 +1,4 @@
-import { Car } from "@/@types/dto/Car";
+import { Car } from "@/@types/Dto/Car";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 interface CarState {

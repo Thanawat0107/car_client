@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { baseUrlAPI } from "../utility/SD";
-import { Brand } from "@/@types/dto/Brand";
+import { Brand } from "@/@types/Dto/Brand";
 import { PaginationMeta } from "@/@types/Responsts/PaginationMeta";
 import { ApiResponse } from "@/@types/Responsts/ApiResponse";
 import { BrandSearchParams } from "@/@types/RequestHelpers/BrandSearchParams";

@@ -1,4 +1,4 @@
-import { Seller } from "@/@types/dto/Seller";
+import { Seller } from "@/@types/Dto/Seller";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 interface SellerState {

@@ -2,7 +2,7 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { baseUrlAPI } from "../utility/SD";
 import { PaginationMeta } from "@/@types/Responsts/PaginationMeta";
 import { ApiResponse } from "@/@types/Responsts/ApiResponse";
-import { TestDive } from "@/@types/dto/TestDive";
+import { TestDive } from "@/@types/Dto/TestDive";
 import { TestDiveSearchParams } from "@/@types/RequestHelpers/TestDiveSearchParams";
 
 const testdiveApi = createApi({

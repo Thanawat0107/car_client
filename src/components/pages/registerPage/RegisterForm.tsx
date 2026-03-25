@@ -1,6 +1,6 @@
 "use client";
 
-import { Register } from "@/@types/dto/Register";
+import { Register } from "@/@types/Dto/Register";
 import { useRegisterMutation } from "@/services/authApi";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";

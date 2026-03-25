@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAppSelector } from "@/hooks/useAppHookState";
-import { SD_Roles } from "@/@types/Enum";
+import { SD_Roles } from "@/@types/Status";
 
 const staticMenu = [
   { name: "หน้าแรก", path: "/" },

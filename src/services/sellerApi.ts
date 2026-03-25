@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { baseUrlAPI } from "../utility/SD";
-import { Seller } from "@/@types/dto/Seller";
+import { Seller } from "@/@types/Dto/Seller";
 import { PaginationMeta } from "@/@types/Responsts/PaginationMeta";
 import { SellerSearchParams } from "@/@types/RequestHelpers/SellerSearchParams";
 import { ApiResponse } from "@/@types/Responsts/ApiResponse";

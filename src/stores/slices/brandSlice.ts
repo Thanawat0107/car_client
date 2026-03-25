@@ -1,5 +1,5 @@
 
-import { Brand } from '@/@types/dto/Brand';
+import { Brand } from '@/@types/Dto/Brand';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface BrandState {

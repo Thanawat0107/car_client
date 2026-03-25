@@ -1,8 +1,7 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { baseUrlAPI } from "../utility/SD";
-import { Car } from "@/@types/dto/Car";
+import { Car } from "@/@types/Dto/Car";
 import { PaginationMeta } from "@/@types/Responsts/PaginationMeta";
-import { CarSearchParams } from "@/@types/RequestHelpers/CarSearchParams";
 import { ApiResponse } from "@/@types/Responsts/ApiResponse";
 
 const carApi = createApi({

@@ -1,13 +1,14 @@
-import { StatusTestDrive } from "../Enum";
+import { StatusTestDrive } from "../Status";
 import { Car } from "./Car";
 import { User } from "./User";
 
-export interface TestDive {
+export interface TestDrive {
   id: number;
   userId: string;
-  user: User;
-  carId: string;
-  car: Car;
+  user?: User;
+  carId: number;
+  car?: Car;
   appointmentDate: string;
-  statusTestDrive: StatusTestDrive;
+  createdAt: string;
+  statusTestDrive: string;
 }

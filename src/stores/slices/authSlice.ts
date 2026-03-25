@@ -1,4 +1,4 @@
-import { SD_Roles } from "@/@types/Enum";
+import { SD_Roles } from "@/@types/Status";
 import { RegisterResponse } from "@/@types/Responsts/RegisterResponse";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 

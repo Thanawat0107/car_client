@@ -1,34 +1,43 @@
 import { Brand } from "./Brand";
-import { CarType, EngineType, GearType, Status } from "../Enum";
 import { Seller } from "./Seller";
 
 export interface Car {
   id: number;
 
-  sellerId: number; //
-  seller: Seller; //
-  brandId: number; //
-  brand: Brand; //
+  sellerId?: number;
+  seller?: Seller;
+  brandId?: number;
+  brand?: Brand;
 
-  carRegistrationNumber?: string; //
-  carIdentificationNumber?: string; //
-  engineNumber?: string; //
-  model: string; //
-  year: number; //
-  price: number; //
-  reservationPrice: number;
+  carRegistrationNumber?: string;
+  carIdentificationNumber?: string;
+  engineNumber?: string;
+  model: string;
+  year: number;
+  price: number;
+  bookingPrice: number;
   mileage: number;
-  color: string; //
+  color: string;
 
-  engineType: EngineType; //
-  gearType: GearType; //
-  carType: CarType; //
+  engineType: string;
+  gearType: string;
+  carType: string;
 
-  description: string; //
-  imageUrl?: string; //
-  createdAt: string; 
+  description: string;
+
+  // merged from CarHistory
+  isCollisionHistory: boolean;
+  insurance?: string;
+  act?: string;
+
+  // merged from Approval
+  approvalRemark?: string;
+  approvedAt?: string;
+
+  carImages: string[];
+  createdAt: string;
   updatedAt: string;
-  status: Status; //
+  carStatus: string;
   isUsed: boolean;
   isApproved: boolean;
   isDeleted: boolean;

@@ -7,7 +7,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useFormik } from "formik";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
-import { CarType, EngineType, GearType, Status } from "@/@types/Enum";
+import { CarType, EngineType, GearType, Status } from "@/@types/Status";
 import {
   useCreateCarMutation,
   useGetCarByIdQuery,
