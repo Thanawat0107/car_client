@@ -3,29 +3,44 @@ import { baseUrlAPI } from "../utility/SD";
 import { Car } from "@/@types/Dto/Car";
 import { PaginationMeta } from "@/@types/Responsts/PaginationMeta";
 import { ApiResponse } from "@/@types/Responsts/ApiResponse";
+import { unwrapResult, toFormData } from "../utility/apiHelpers";
+import type { CarCreateDto, CarUpdateDto } from "@/@types/Dto";
 
-const carApi = createApi({
+export const carApi = createApi({
   reducerPath: "carApi",
   baseQuery: fetchBaseQuery({
     baseUrl: baseUrlAPI,
+    prepareHeaders: (headers) => {
+      const token = localStorage.getItem("token");
+      if (token) {
+        headers.set("authorization", `Bearer ${token}`);
+      }
+      return headers;
+    },
   }),
   tagTypes: ["Car"],
   endpoints: (builder) => ({
     getCarAll: builder.query<
       { result: Car[]; meta: PaginationMeta },
-      CarSearchParams
+      { sellerId?: number; isApproved?: boolean; pageNumber?: number; pageSize?: number }
     >({
       query: (params) => ({
         url: "cars/getall",
         method: "GET",
         params,
       }),
-      keepUnusedDataFor: 300, // cache นานขึ้น 5 นาที
+      keepUnusedDataFor: 300,
       transformResponse: async (response: ApiResponse<Car[]>) => ({
         result: response.result ?? [],
         meta: response.meta as PaginationMeta,
       }),
-      providesTags: ["Car"],
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.result.map(({ id }) => ({ type: "Car" as const, id })),
+              { type: "Car", id: "LIST" },
+            ]
+          : [{ type: "Car", id: "LIST" }],
     }),
 
     getCarById: builder.query<Car, number>({
@@ -33,38 +48,32 @@ const carApi = createApi({
         url: `cars/getbyid/${carId}`,
         method: "GET",
       }),
-      keepUnusedDataFor: 300, // cache นานขึ้น 5 นาที
-      transformResponse: async (response: ApiResponse<Car>) => {
-        if (response.result) return response.result;
-        throw new Error(response.message);
-      },
-      providesTags: (result, error, carId) => [{ type: "Car", carId }],
+      keepUnusedDataFor: 300,
+      transformResponse: unwrapResult<Car>,
+      providesTags: (result, error, carId) => [{ type: "Car", id: carId }],
     }),
 
-    createCar: builder.mutation<Car, FormData>({
-      query: (formData) => ({
+    createCar: builder.mutation<Car, CarCreateDto>({
+      query: (data) => ({
         url: "cars/create",
         method: "POST",
-        body: formData,
+        body: toFormData(data),
       }),
-      transformResponse: (response: ApiResponse<Car>) => {
-        if (response.result) return response.result;
-        throw new Error(response.message);
-      },
-      invalidatesTags: ["Car"],
+      transformResponse: unwrapResult<Car>,
+      invalidatesTags: [{ type: "Car", id: "LIST" }],
     }),
 
-    updateCar: builder.mutation<Car, { formData: FormData; carId: number }>({
-      query: ({ formData, carId }) => ({
+    updateCar: builder.mutation<Car, { data: CarUpdateDto; carId: number }>({
+      query: ({ data, carId }) => ({
         url: `cars/update/${carId}`,
         method: "PUT",
-        body: formData,
+        body: toFormData(data),
       }),
-      transformResponse: (response: ApiResponse<Car>) => {
-        if (response.result) return response.result;
-        throw new Error(response.message);
-      },
-      invalidatesTags: (result, error, { carId }) => [{ type: "Car", carId }],
+      transformResponse: unwrapResult<Car>,
+      invalidatesTags: (result, error, { carId }) => [
+        { type: "Car", id: carId },
+        { type: "Car", id: "LIST" }
+      ],
     }),
 
     deleteCar: builder.mutation<string, number>({
@@ -72,11 +81,28 @@ const carApi = createApi({
         url: `cars/delete/${id}`,
         method: "PUT",
       }),
-      transformResponse: (response: ApiResponse<string>) => {
-        if (response.result) return response.result;
-        throw new Error(response.message);
-      },
-      invalidatesTags: ["Car"],
+      transformResponse: unwrapResult<string>,
+      invalidatesTags: (result, error, id) => [
+        { type: "Car", id },
+        { type: "Car", id: "LIST" },
+      ],
+    }),
+
+    approveCar: builder.mutation<string, { carId: number; isApproved: boolean; remark?: string }>({
+      query: (body) => ({
+        url: "cars/ApproveCar",
+        method: "PUT",
+        body: {
+          carId: body.carId,
+          isApproved: body.isApproved,
+          remark: body.remark || "",
+        },
+      }),
+      transformResponse: unwrapResult<string>,
+      invalidatesTags: (result, error, { carId }) => [
+        { type: "Car", id: carId },
+        { type: "Car", id: "LIST" },
+      ],
     }),
   }),
 });
@@ -87,6 +113,7 @@ export const {
   useCreateCarMutation,
   useUpdateCarMutation,
   useDeleteCarMutation,
+  useApproveCarMutation,
   usePrefetch,
 } = carApi;
 

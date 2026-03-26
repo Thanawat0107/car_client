@@ -1,17 +1,16 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { baseUrlAPI } from "../utility/SD";
-import { ApiResponse } from "@/@types/Responsts/ApiResponse";
 import { Login } from "@/@types/Dto/Login";
 import { RegisterResponse } from "@/@types/Responsts/RegisterResponse";
 import { LoginResponse } from "@/@types/Responsts/LoginResponse";
 import { Register } from "@/@types/Dto/Register";
+import { unwrapResult } from "../utility/apiHelpers";
 
-const authApi = createApi({
+export const authApi = createApi({
   reducerPath: "authApi",
   baseQuery: fetchBaseQuery({
     baseUrl: baseUrlAPI,
   }),
-  tagTypes: ["Auth"],
   endpoints: (builder) => ({
     register: builder.mutation<RegisterResponse, Register>({
       query: (body) => ({
@@ -19,11 +18,7 @@ const authApi = createApi({
         method: "POST",
         body,
       }),
-      transformResponse: (response: ApiResponse<RegisterResponse>) => {
-        if (response.result) return response.result;
-        throw new Error(response.message);
-      },
-      invalidatesTags: ["Auth"],
+      transformResponse: unwrapResult<RegisterResponse>,
     }),
 
     login: builder.mutation<LoginResponse, Login>({
@@ -32,13 +27,8 @@ const authApi = createApi({
         method: "POST",
         body,
       }),
-      transformResponse: (response: ApiResponse<LoginResponse>) => {
-        if (response.result) return response.result;
-        throw new Error(response.message);
-      },
-      invalidatesTags: ["Auth"],
+      transformResponse: unwrapResult<LoginResponse>,
     }),
-    
   }),
 });
 

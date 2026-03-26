@@ -29,7 +29,7 @@ export default function CarList() {
     () =>
       debounce((val: string) => {
         setFilters((prev) => ({ ...prev, searchTerm: val, pageNumber: 1 }));
-      }, 500),
+      }, 300),
     []
   );
 

@@ -33,7 +33,7 @@ export default function CarPage() {
     () =>
       debounce((val: string) => {
         setCarFilters((prev) => ({ ...prev, searchTerm: val, pageNumber: 1 }));
-      }, 500),
+      }, 300),
     []
   );
 
@@ -46,7 +46,7 @@ export default function CarPage() {
           searchTerm: val,
           pageNumber: 1,
         }));
-      }, 500),
+      }, 300),
     []
   );
 

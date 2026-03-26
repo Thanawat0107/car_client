@@ -4,7 +4,8 @@
 import { Car } from "@/@types/Dto/Car";
 import { baseUrl } from "@/utility/SD";
 import { useRouter } from "next/navigation";
-import React from "react";
+import React, { useCallback } from "react";
+import { usePrefetch } from "@/services/carApi";
 
 interface Props {
   car: Car;
@@ -12,13 +13,21 @@ interface Props {
 
 export default function CarCard({ car }: Props) {
   const router = useRouter();
+  const prefetchCarById = usePrefetch('getCarById', { ifOlderThan: 60 });
 
    const handleClick = () => {
     router.push(`/car/${car.id}`);
   };
 
+  const handleMouseEnter = useCallback(() => {
+    prefetchCarById(car.id);
+  }, [car.id, prefetchCarById]);
+
   return (
-    <div className="bg-gray-100 rounded-xl shadow hover:shadow-md transition-shadow duration-300 w-full">
+    <div
+      className="bg-gray-100 rounded-xl shadow hover:shadow-md transition-shadow duration-300 w-full"
+      onMouseEnter={handleMouseEnter}
+    >
       <div className="relative" onClick={handleClick}>
         <img
           src={baseUrl + car.imageUrl}

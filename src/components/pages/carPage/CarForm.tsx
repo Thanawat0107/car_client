@@ -7,7 +7,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useFormik } from "formik";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
-import { CarType, EngineType, GearType, Status } from "@/@types/Status";
+import { CarStatus, CarType, EngineType, GearType } from "@/@types/Status";
 import {
   useCreateCarMutation,
   useGetCarByIdQuery,
@@ -30,6 +30,7 @@ import {
 import { useGetBrandAllQuery } from "@/services/brandApi";
 import { SelectFieldWithImage } from "../selectField/SelectFieldWithImage";
 import { InputField } from "../inputField/InputField";
+import type { CarCreateDto, CarUpdateDto } from "@/@types/Dto";
 
 const MySwal = withReactContent(Swal);
 const redirectPath = "/manages/car";
@@ -122,24 +123,44 @@ export default function CarForm() {
   const handleSubmit = async (
     values: CarCreateFormValues | CarUpdateFormValues
   ) => {
-    const formData = new FormData();
-    Object.entries(values).forEach(([key, value]) => {
-      if (key === "imageFile") return;
-
-      const finalValue =
-        key === "brandId" ? Number(value).toString() : String(value ?? "");
-      formData.append(key, finalValue);
-    });
-
-    if (values.imageFile) {
-      formData.append("imageFile", values.imageFile);
-    }
+    const ev = Object.values;
+    const baseDto = {
+      sellerId: values.sellerId,
+      brandId: Number(values.brandId),
+      carRegistrationNumber: values.carRegistrationNumber,
+      carIdentificationNumber: values.carIdentificationNumber,
+      engineNumber: values.engineNumber,
+      model: values.model,
+      year: values.year,
+      price: values.price,
+      bookingPrice: values.reservationPrice,
+      mileage: values.mileage,
+      color: values.color,
+      engineType: ev(EngineType)[values.engineType],
+      gearType: ev(GearType)[values.gearType],
+      carType: ev(CarType)[values.carType],
+      carStatus: ev(CarStatus)[values.status],
+      description: values.description,
+      isCollisionHistory: false,
+      newImages: values.imageFile ? [values.imageFile] : undefined,
+    };
 
     if (isEditMode) {
-      await updateCar({ carId: Number(carId), formData }).unwrap();
+      const updateValues = values as CarUpdateFormValues;
+      const updateDto: CarUpdateDto = {
+        ...baseDto,
+        isUsed: updateValues.isUsed,
+        isDeleted: updateValues.isDeleted,
+        updatedAt: new Date().toISOString(),
+      };
+      await updateCar({ carId: Number(carId), data: updateDto }).unwrap();
       await showAlert("อัปเดตรถสำเร็จ");
     } else {
-      await createCar(formData).unwrap();
+      const createDto: CarCreateDto = {
+        ...baseDto,
+        createdAt: new Date().toISOString(),
+      };
+      await createCar(createDto).unwrap();
       await showAlert("เพิ่มรถสำเร็จ");
     }
 

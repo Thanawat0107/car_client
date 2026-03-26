@@ -15,6 +15,7 @@
     "@heroui/alert": "^2.2.19",
     "@heroui/system": "^2.4.15",
     "@heroui/theme": "^2.4.15",
+    "@microsoft/signalr": "^10.0.0",
     "@reduxjs/toolkit": "^2.8.2",
     "@stripe/react-stripe-js": "^3.7.0",
     "@stripe/stripe-js": "^7.3.1",

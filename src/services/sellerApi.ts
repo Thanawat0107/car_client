@@ -2,32 +2,45 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { baseUrlAPI } from "../utility/SD";
 import { Seller } from "@/@types/Dto/Seller";
 import { PaginationMeta } from "@/@types/Responsts/PaginationMeta";
-import { SellerSearchParams } from "@/@types/RequestHelpers/SellerSearchParams";
 import { ApiResponse } from "@/@types/Responsts/ApiResponse";
-import { SellerCreateFormValues } from "@/components/pages/sellerPage/SellerFormValues";
+import { SellerCreateDto, SellerUpdateDto } from "@/@types/Dto";
+import { unwrapResult } from "../utility/apiHelpers";
 
-const sellerApi = createApi({
+export const sellerApi = createApi({
   reducerPath: "sellerApi",
   baseQuery: fetchBaseQuery({
     baseUrl: baseUrlAPI,
+    prepareHeaders: (headers) => {
+      const token = localStorage.getItem("token");
+      if (token) {
+        headers.set("authorization", `Bearer ${token}`);
+      }
+      return headers;
+    },
   }),
   tagTypes: ["Seller"],
   endpoints: (builder) => ({
     getSellerAll: builder.query<
       { result: Seller[]; meta: PaginationMeta },
-      SellerSearchParams
+      { isVerified?: boolean; pageNumber?: number; pageSize?: number }
     >({
       query: (params) => ({
         url: "sellers/getall",
         method: "GET",
         params,
       }),
-      keepUnusedDataFor: 300, // cache นานขึ้น 5 นาที
+      keepUnusedDataFor: 300,
       transformResponse: async (response: ApiResponse<Seller[]>) => ({
         result: response.result ?? [],
         meta: response.meta as PaginationMeta,
       }),
-      providesTags: ["Seller"],
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.result.map(({ id }) => ({ type: "Seller" as const, id })),
+              { type: "Seller", id: "LIST" },
+            ]
+          : [{ type: "Seller", id: "LIST" }],
     }),
 
     getSellerById: builder.query<Seller, number>({
@@ -35,42 +48,34 @@ const sellerApi = createApi({
         url: `sellers/getbyid/${sellerId}`,
         method: "GET",
       }),
-      keepUnusedDataFor: 300, // cache นานขึ้น 5 นาที
-      transformResponse: async (response: ApiResponse<Seller>) => {
-        if (response.result) return response.result;
-        throw new Error(response.message);
-      },
-      providesTags: (result, error, sellerId) => [{ type: "Seller", sellerId }],
+      keepUnusedDataFor: 300,
+      transformResponse: unwrapResult<Seller>,
+      providesTags: (result, error, sellerId) => [{ type: "Seller", id: sellerId }],
     }),
 
-    createSeller: builder.mutation<Seller, SellerCreateFormValues>({
+    createSeller: builder.mutation<Seller, SellerCreateDto>({
       query: (body) => ({
         url: "sellers/create",
         method: "POST",
         body,
       }),
-      transformResponse: (response: ApiResponse<Seller>) => {
-        if (response.result) return response.result;
-        throw new Error(response.message);
-      },
-      invalidatesTags: ["Seller"],
+      transformResponse: unwrapResult<Seller>,
+      invalidatesTags: [{ type: "Seller", id: "LIST" }],
     }),
 
     updateSeller: builder.mutation<
       Seller,
-      { sellerId: number; sellerData: Seller }
+      { sellerId: number; sellerData: SellerUpdateDto }
     >({
       query: ({ sellerId, sellerData }) => ({
         url: `sellers/update/${sellerId}`,
         method: "PUT",
         body: sellerData,
       }),
-      transformResponse: (response: ApiResponse<Seller>) => {
-        if (response.result) return response.result;
-        throw new Error(response.message);
-      },
+      transformResponse: unwrapResult<Seller>,
       invalidatesTags: (result, error, { sellerId }) => [
-        { type: "Seller", sellerId },
+        { type: "Seller", id: sellerId },
+        { type: "Seller", id: "LIST" }
       ],
     }),
 
@@ -79,11 +84,24 @@ const sellerApi = createApi({
         url: `sellers/delete/${id}`,
         method: "DELETE",
       }),
-      transformResponse: (response: ApiResponse<string>) => {
-        if (response.result) return response.result;
-        throw new Error(response.message);
-      },
-      invalidatesTags: ["Seller"],
+      transformResponse: unwrapResult<string>,
+      invalidatesTags: (result, error, id) => [
+        { type: "Seller", id },
+        { type: "Seller", id: "LIST" },
+      ],
+    }),
+
+    verifySeller: builder.mutation<string, { sellerId: number, isVerified: boolean }>({
+      query: ({ sellerId, isVerified }) => ({
+        url: `sellers/verify/${sellerId}`,
+        method: "PUT",
+        body: isVerified, 
+      }),
+      transformResponse: unwrapResult<string>,
+      invalidatesTags: (result, error, { sellerId }) => [
+        { type: "Seller", id: sellerId },
+        { type: "Seller", id: "LIST" }
+      ],
     }),
   }),
 });
@@ -94,6 +112,7 @@ export const {
   useCreateSellerMutation,
   useUpdateSellerMutation,
   useDeleteSellerMutation,
+  useVerifySellerMutation,
   usePrefetch,
 } = sellerApi;
 

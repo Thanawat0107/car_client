@@ -16,6 +16,7 @@ import {
 import { BrandCreateFormValues, BrandUpdateFormValues } from "./BrandFormValues";
 import { createValidationSchema, updateValidationSchema } from "./validationSchema";
 import { baseUrl } from "@/utility/SD";
+import type { BrandCreateDto, BrandUpdateDto } from "@/@types/Dto";
 
 const MySwal = withReactContent(Swal);
 const redirectPath = "/manages/brand";
@@ -69,18 +70,22 @@ useEffect(() => {
 }, [isEditMode, result?.imageUrl]);
 
   const handleSubmit = async (values: BrandCreateFormValues | BrandUpdateFormValues) => {
-    const formData = new FormData();
-    formData.append("name", values.name);
-    formData.append("isUsed", String((values as BrandCreateFormValues).isUsed));
-    if (values.imageFile) formData.append("imageFile", values.imageFile);
-
     if (isEditMode) {
-      formData.append("isUsed", String((values as BrandUpdateFormValues).isUsed));
-      formData.append("isDelete", String((values as BrandUpdateFormValues).isDelete));
-      await updateBrand({ brandId: Number(brandId), formData }).unwrap();
+      const updateDto: BrandUpdateDto = {
+        name: values.name,
+        imageFile: values.imageFile ?? undefined,
+        isUsed: values.isUsed,
+        isDelete: (values as BrandUpdateFormValues).isDelete,
+      };
+      await updateBrand({ brandId: Number(brandId), data: updateDto }).unwrap();
       await showAlert("อัปเดตแบรนด์สำเร็จ");
     } else {
-      await createBrand(formData).unwrap();
+      const createDto: BrandCreateDto = {
+        name: values.name,
+        imageFile: values.imageFile ?? undefined,
+        isUsed: values.isUsed,
+      };
+      await createBrand(createDto).unwrap();
       await showAlert("เพิ่มแบรนด์สำเร็จ");
     }
 
