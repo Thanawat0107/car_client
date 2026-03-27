@@ -28,6 +28,16 @@ export const stripePaymentsApi = createApi({
       transformResponse: unwrapResult<PaymentIntentResponse>,
     }),
 
+    confirmStripePayment: builder.mutation<string, { paymentIntentId: string }>({
+      query: (body) => ({
+        url: "stripePayments/confirm",
+        method: "POST",
+        body,
+      }),
+      transformResponse: unwrapResult<string>,
+      invalidatesTags: ["Payment", "Booking", "Car"],
+    }),
+
     refundPayment: builder.mutation<string, { transactionRef: string }>({
       query: (body) => ({
         url: "stripePayments/refund",
@@ -42,6 +52,7 @@ export const stripePaymentsApi = createApi({
 
 export const {
   useCreatePaymentIntentMutation,
+  useConfirmStripePaymentMutation,
   useRefundPaymentMutation,
 } = stripePaymentsApi;
 

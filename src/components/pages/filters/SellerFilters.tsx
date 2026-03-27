@@ -1,11 +1,20 @@
 "use client";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { SellerSearchParams } from "@/@types/RequestHelpers/SellerSearchParams";
 import { FC } from "react";
 import { InputField } from "../inputField/InputField";
 import { SelectField } from "../selectField/SelectField";
 import SearchInput from "../searchInput/SearchInput";
+
+export interface SellerSearchParams {
+  pageNumber: number;
+  pageSize: number;
+  searchTerm?: string;
+  identityNumber?: string;
+  address?: string;
+  isVerified?: boolean;
+  sortBy?: string;
+}
 
 interface SellerFiltersProps {
   filters: SellerSearchParams;
@@ -15,18 +24,19 @@ interface SellerFiltersProps {
 }
 
 const statusOptions = [
+  { value: "", label: "ทั้งหมด" },
   { value: "true", label: "ยืนยันแล้ว" },
   { value: "false", label: "ยังไม่ยืนยัน" },
 ];
 
 const sortOptions = [
-  { value: "id", label: "ล่าสุด" },                          // เรียงตาม Id ล่าสุด
-  { value: "userid", label: "รหัสผู้ใช้ น้อย → มาก" },       // OrderBy(s => s.UserId)
-  { value: "userid_desc", label: "รหัสผู้ใช้ มาก → น้อย" },  // OrderByDescending(s => s.UserId)
-  { value: "identitynumber", label: "เลขบัตร น้อย → มาก" },  // OrderBy(s => s.IdentityNumber)
-  { value: "identitynumber_desc", label: "เลขบัตร มาก → น้อย" }, // OrderByDescending(s => s.IdentityNumber)
-  { value: "isverified", label: "สถานะ: ยังไม่ยืนยัน → ยืนยันแล้ว" }, // false → true
-  { value: "isverified_desc", label: "สถานะ: ยืนยันแล้ว → ยังไม่ยืนยัน" }, // true → false
+  { value: "id", label: "ล่าสุด" },
+  { value: "userid", label: "รหัสผู้ใช้ น้อย → มาก" },
+  { value: "userid_desc", label: "รหัสผู้ใช้ มาก → น้อย" },
+  { value: "identitynumber", label: "เลขบัตร น้อย → มาก" },
+  { value: "identitynumber_desc", label: "เลขบัตร มาก → น้อย" },
+  { value: "isverified", label: "สถานะ: ยังไม่ยืนยัน → ยืนยันแล้ว" },
+  { value: "isverified_desc", label: "สถานะ: ยืนยันแล้ว → ยังไม่ยืนยัน" },
 ];
 
 const SellerFilters: FC<SellerFiltersProps> = ({
@@ -36,20 +46,29 @@ const SellerFilters: FC<SellerFiltersProps> = ({
   setSearch,
 }) => {
   const handleChange = (field: keyof SellerSearchParams, value: any) => {
-    setFilters((prev) => ({ ...prev, [field]: value, pageNumber: 1 }));
+    let parsedValue: any;
+
+    if (field === "isVerified") {
+      parsedValue = value === "" ? undefined : value === "true";
+    } else {
+      parsedValue = value === "" ? undefined : value;
+    }
+
+    setFilters({ ...filters, [field]: parsedValue, pageNumber: 1 });
   };
 
   const handleReset = () => {
     setFilters({
       pageNumber: 1,
       pageSize: 10,
-      isVerified: false,
+      sortBy: "id",
     });
     setSearch("");
   };
 
   return (
-    <div className="bg-white shadow-md rounded-lg p-6 w-full">
+    // 🚀 เพิ่ม mb-6 เหมือนใน Car/Brand Filters
+    <div className="bg-white shadow-md rounded-lg p-6 w-full mb-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
         <h2 className="text-lg font-semibold text-gray-700">🔍 ค้นหาผู้ขาย</h2>
         <div className="flex flex-col sm:flex-row justify-end gap-3">
@@ -59,40 +78,35 @@ const SellerFilters: FC<SellerFiltersProps> = ({
           >
             ♻️ รีเซต
           </button>
-          <button
-            onClick={() => setFilters({ ...filters, pageNumber: 1 })}
-            className="px-4 py-2 bg-primary hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm"
-          >
-            🔍 ค้นหา
-          </button>
+          {/* 🚀 นำปุ่ม 'ค้นหา' ออก เพราะเราใช้ on change trigger อัตโนมัติเหมือนหน้าอื่นๆ */}
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {/* ค้นหาด้วยชื่อผู้ใช้/ชื่อเต็ม */}
-        <SearchInput value={search} onChange={setSearch} placeholder="ค้นหาชื่อผู้ใช้ หรือ ชื่อเต็ม" />
+        <SearchInput value={search} onChange={setSearch} />
 
         {/* บัตรประชาชน */}
         <InputField
           label="เลขบัตรประชาชน"
-          placeholder="ค้นหาเลขบัตรประชาชน"
+          type="text"
           value={filters.identityNumber ?? ""}
-          onChange={(v: any) => handleChange("identityNumber", v)}
+          onChange={(e) => handleChange("identityNumber", e.target.value)} // 🚀 แก้ไขเป็น e.target.value ให้ตรงกับ Component InputField
         />
 
         {/* ที่อยู่ */}
         <InputField
           label="ที่อยู่"
-          placeholder="ค้นหาที่อยู่"
+          type="text"
           value={filters.address ?? ""}
-          onChange={(v: any) => handleChange("address", v)}
+          onChange={(e) => handleChange("address", e.target.value)} // 🚀 แก้ไขเป็น e.target.value
         />
 
         {/* สถานะยืนยันตัวตน */}
         <SelectField
           label="สถานะยืนยันตัวตน"
-          value={filters.isVerified?.toString()}
-          onChange={(v) => handleChange("isVerified", v === "" ? undefined : v === "true")}
+          value={filters.isVerified !== undefined ? String(filters.isVerified) : ""}
+          onChange={(v) => handleChange("isVerified", v)}
           options={statusOptions}
           placeholder="เลือกสถานะ"
         />
@@ -100,7 +114,7 @@ const SellerFilters: FC<SellerFiltersProps> = ({
         {/* เรียงตาม */}
         <SelectField
           label="เรียงตาม"
-          value={filters.sortBy ?? ""}
+          value={filters.sortBy || "id"}
           onChange={(v: any) => handleChange("sortBy", v)}
           options={sortOptions}
           placeholder="เลือกการเรียง"

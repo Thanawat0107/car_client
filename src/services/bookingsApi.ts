@@ -4,7 +4,7 @@ import { ApiResponse } from "@/@types/Responsts/ApiResponse";
 import { PaginationMeta } from "@/@types/Responsts/PaginationMeta";
 import { Booking, BookingCreateDto } from "@/@types/Dto";
 import { unwrapResult } from "../utility/apiHelpers";
-import signalrService from "../services/signalrService"; // 🌟 1. นำเข้า Service
+import signalrService from "../services/signalrService";
 
 export const bookingsApi = createApi({
   reducerPath: "bookingsApi",

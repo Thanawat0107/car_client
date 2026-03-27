@@ -91,7 +91,7 @@ const CarFilters: FC<CarFiltersProps> = ({
   const handleReset = () => {
     setFilters({
       pageNumber: 1,
-      pageSize: 10, // สมมติค่าเริ่มต้น
+      pageSize: 10,
     });
     setSearch("");
   };

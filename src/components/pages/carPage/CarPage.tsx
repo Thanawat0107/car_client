@@ -12,11 +12,10 @@ import CarFilters, { CarSearchParams } from "../filters/CarFilters";
 import { baseUrl } from "@/utility/SD";
 
 export default function CarPage() {
-  // 1. State สำหรับฟิลเตอร์รถยนต์
   const [carSearch, setCarSearch] = useState("");
   const [carFilters, setCarFilters] = useState<CarSearchParams>({
     pageNumber: 1,
-    pageSize: 12, // ใช้ 12 เพราะแบ่ง grid 3 หรือ 4 คอลัมน์จะลงตัวสวยงาม
+    pageSize: 12,
     sortBy: "id",
   });
 
@@ -100,8 +99,8 @@ export default function CarPage() {
       default: data.sort((a, b) => b.id - a.id); break;
     }
 
-    // 🚀 เพิ่ม: กรองเฉพาะรถที่ "เปิดใช้งาน" (isUsed) และ "ตรวจสอบแล้ว" (isApproved)
-    data = data.filter((c) => c.isUsed && c.isApproved);
+    // กรองเฉพาะรถที่อนุมัติแล้ว
+    data = data.filter((c) => c.isApproved);
 
     return data;
   }, [allCars, carFilters, carSearch, selectedBrandId]);

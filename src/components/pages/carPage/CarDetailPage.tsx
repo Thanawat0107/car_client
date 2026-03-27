@@ -2,8 +2,9 @@
 "use client";
 
 import { useGetCarByIdQuery } from "@/services/carApi";
+import { useCreateBookingMutation } from "@/services/bookingsApi";
 import { Share2, AlertTriangle, ShieldCheck, FileText, CalendarClock } from "lucide-react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { baseUrl } from "@/utility/SD";
 import {
   carTypeLabels,
@@ -13,13 +14,64 @@ import {
 } from "../filters/CarFilters"; 
 import { getEnumLabel } from "@/utility/enumHelpers";
 import { useState } from "react";
+import { useAppSelector } from "@/hooks/useAppHookState";
+import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
+import BookingPaymentModal from "../bookingPage/BookingPaymentModal";
+import { Booking } from "@/@types/Dto";
+
+const MySwal = withReactContent(Swal);
 
 export default function CarDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const carId = Number(params?.id);
-  const [activeImageIndex, setActiveImageIndex] = useState(0); // 🚀 เพิ่ม State สำหรับจัดการการเลือกรูปหลัก
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isBooking, setIsBooking] = useState(false);
+  const [paymentBooking, setPaymentBooking] = useState<Booking | null>(null);
 
+  const { userId, isAuthenticated } = useAppSelector((state) => state.auth);
   const { data: car, isLoading, error } = useGetCarByIdQuery(carId);
+  const [createBooking] = useCreateBookingMutation();
+
+  const handleBooking = async () => {
+    if (!isAuthenticated || !userId) {
+      await MySwal.fire({
+        icon: "warning",
+        title: "กรุณาเข้าสู่ระบบ",
+        text: "คุณต้องเข้าสู่ระบบก่อนทำการจอง",
+        confirmButtonText: "เข้าสู่ระบบ",
+      });
+      router.push("/login");
+      return;
+    }
+    const confirm = await MySwal.fire({
+      title: "ยืนยันการจอง?",
+      html: `จองมัดจำรถคันนี้ <b>${car?.bookingPrice?.toLocaleString() ?? 0} ฿</b><br/><span style="font-size:0.85rem;color:#6b7280">เมื่อยืนยัน ระบบจะเปิดหน้าชำระเงินทันที</span>`,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#059669",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "ยืนยัน",
+      cancelButtonText: "ยกเลิก",
+    });
+    if (!confirm.isConfirmed) return;
+    try {
+      setIsBooking(true);
+      const created = await createBooking({ carId, userId }).unwrap();
+      // เปิด modal ชำระเงินทันทีที่จองสำเร็จ
+      // ต้องการ booking พร้อม car data — ผนวก car จาก cache
+      setPaymentBooking({ ...created, car } as unknown as Booking);
+    } catch (err: any) {
+      await MySwal.fire({
+        icon: "error",
+        title: "เกิดข้อผิดพลาด",
+        text: err?.data?.message ?? "ไม่สามารถจองรถได้ กรุณาลองใหม่อีกครั้ง",
+      });
+    } finally {
+      setIsBooking(false);
+    }
+  };
 
   if (isLoading)
     return (
@@ -54,6 +106,7 @@ export default function CarDetailPage() {
   };
 
   return (
+    <>
     <div className="max-w-7xl mx-auto p-4 lg:py-10 grid lg:grid-cols-12 gap-8 bg-gray-50 min-h-screen">
       {/* ─── ฝั่งซ้าย: รูปภาพ & ปุ่ม Action ─── */}
       <div className="lg:col-span-7 space-y-4">
@@ -153,10 +206,17 @@ export default function CarDetailPage() {
               </span>
             </label>
             <button 
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold w-full py-3.5 rounded-xl shadow-md transition disabled:bg-gray-300 disabled:cursor-not-allowed"
-              disabled={car.carStatus !== "Available"}
+              onClick={handleBooking}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold w-full py-3.5 rounded-xl shadow-md transition disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              disabled={car.carStatus !== "Available" || isBooking}
             >
-              {car.carStatus === "Available" ? "ดำเนินการจองรถ" : "รถคันนี้ไม่ว่าง"}
+              {isBooking ? (
+                <span className="loading loading-spinner loading-sm"></span>
+              ) : car.carStatus === "Available" ? (
+                "ดำเนินการจองรถ"
+              ) : (
+                "รถคันนี้ไม่ว่าง"
+              )}
             </button>
           </div>
         </div>
@@ -278,5 +338,18 @@ export default function CarDetailPage() {
         </div>
       </div>
     </div>
+
+    {/* Payment Modal — เปิดทันทีหลังจองสำเร็จ */}
+    {paymentBooking && (
+      <BookingPaymentModal
+        booking={paymentBooking}
+        onClose={() => setPaymentBooking(null)}
+        onSuccess={() => {
+          setPaymentBooking(null);
+          router.push("/booking");
+        }}
+      />
+    )}
+    </>
   );
 }

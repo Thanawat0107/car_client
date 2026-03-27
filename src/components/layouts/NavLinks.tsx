@@ -4,11 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAppSelector } from "@/hooks/useAppHookState";
 import { SD_Roles } from "@/@types/Status";
+import { useEffect, useState } from "react";
 
-const staticMenu = [
+const publicMenu = [
   { name: "หน้าแรก", path: "/" },
   { name: "ซื้อรถยนต์", path: "/car" },
-  { name: "ขายรถยนต์", path: "/manages/car" },
   { name: "คำนวณค่างวด", path: "/loan-calculator" },
 ];
 
@@ -16,17 +16,22 @@ const adminMenu = [
   { name: "จัดการยี่ห้อ", path: "/manages/brand" },
   { name: "จัดการรถยนต์", path: "/manages/car" },
   { name: "จัดการผู้จำหน่าย", path: "/manages/seller" },
+  { name: "จัดการการจอง", path: "/manages/booking" },
+  { name: "จัดการชำระเงิน", path: "/manages/payment" },
 ];
 
 export default function NavLinks() {
   const pathname = usePathname();
-  const { role } = useAppSelector((state) => state.auth);
+  const { role, isAuthenticated } = useAppSelector((state) => state.auth);
   const isAdminOrSeller =
     role === SD_Roles.Role_Admin || role === SD_Roles.Role_Seller;
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
   return (
      <>
-      {staticMenu.map((item) => (
+      {publicMenu.map((item) => (
         <li key={item.path}>
           <Link
             className={pathname === item.path ? "active" : ""}
@@ -37,7 +42,18 @@ export default function NavLinks() {
         </li>
       ))}
 
-      {isAdminOrSeller && (
+      {mounted && isAuthenticated && !isAdminOrSeller && (
+        <li>
+          <Link
+            className={pathname === "/booking" ? "active" : ""}
+            href="/booking"
+          >
+            การจองของฉัน
+          </Link>
+        </li>
+      )}
+
+      {mounted && isAdminOrSeller && (
         <li>
           <details>
             <summary>การจัดการ</summary>
