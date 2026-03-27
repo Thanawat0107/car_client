@@ -10,6 +10,8 @@ import Pagination from "../pagination/Pagination";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import { baseUrl } from "@/utility/SD";
+import { carTypeLabels } from "../filters/CarFilters";
+import { getEnumLabel } from "@/utility/enumHelpers";
 
 const MySwal = withReactContent(Swal);
 const createPath = "/manages/car/create";
@@ -26,8 +28,7 @@ export default function CarList() {
     sortBy: "id", // ค่าเริ่มต้นให้เรียงตามล่าสุด
   });
 
-  // 2. ดึงข้อมูลรถ "ทั้งหมด" หรือก้อนใหญ่ๆ 
-  // (สมมติว่ากำหนด pageSize: 1000 เพื่อดึงมาให้หมดในรอบเดียวสำหรับทำ Client-side filter)
+  // 2. ดึงข้อมูลรถ "ทั้งหมด"
   const { data: result, error, isLoading } = useGetCarAllQuery({ 
     pageNumber: 1, 
     pageSize: 1000 
@@ -37,11 +38,10 @@ export default function CarList() {
 
   const allCars = result?.result ?? [];
 
-  // 3. 🚀 กรองข้อมูลและจัดเรียงฝั่ง Frontend ด้วย useMemo
+  // 3. กรองข้อมูลและจัดเรียงฝั่ง Frontend ด้วย useMemo
   const filteredCars = useMemo(() => {
     let data = [...allCars];
 
-    // --- กรองข้อความ (ชื่อรุ่น, ทะเบียน) ---
     if (search) {
       const q = search.toLowerCase();
       data = data.filter(
@@ -51,7 +51,6 @@ export default function CarList() {
       );
     }
 
-    // --- กรองตัวเลข (ราคา, ปี, ไมล์) ---
     if (filters.minPrice !== undefined) data = data.filter(c => c.price >= filters.minPrice!);
     if (filters.maxPrice !== undefined) data = data.filter(c => c.price <= filters.maxPrice!);
     if (filters.minYear !== undefined) data = data.filter(c => c.year >= filters.minYear!);
@@ -59,13 +58,11 @@ export default function CarList() {
     if (filters.minMileage !== undefined) data = data.filter(c => c.mileage >= filters.minMileage!);
     if (filters.maxMileage !== undefined) data = data.filter(c => c.mileage <= filters.maxMileage!);
 
-    // --- กรอง Enum (ประเภท, เครื่องยนต์, เกียร์, สถานะ) ---
     if (filters.carType) data = data.filter(c => c.carType === filters.carType);
     if (filters.engineType) data = data.filter(c => c.engineType === filters.engineType);
     if (filters.gearType) data = data.filter(c => c.gearType === filters.gearType);
     if (filters.carStatus) data = data.filter(c => c.carStatus === filters.carStatus);
 
-    // --- จัดเรียงข้อมูล (Sorting) ---
     switch (filters.sortBy) {
       case "price": data.sort((a, b) => a.price - b.price); break;
       case "price_desc": data.sort((a, b) => b.price - a.price); break;
@@ -75,20 +72,20 @@ export default function CarList() {
       case "mileageDesc": data.sort((a, b) => b.mileage - a.mileage); break;
       case "id": 
       default: 
-        data.sort((a, b) => b.id - a.id); // ล่าสุด (ID มากไปน้อย)
+        data.sort((a, b) => b.id - a.id); 
         break; 
     }
 
     return data;
   }, [allCars, filters, search]);
 
-  // 4. 🚀 แบ่งหน้า (Pagination) ฝั่ง Frontend
+  // 4. แบ่งหน้า (Pagination)
   const pagedCars = useMemo(() => {
     const start = (filters.pageNumber - 1) * filters.pageSize;
     return filteredCars.slice(start, start + filters.pageSize);
   }, [filteredCars, filters.pageNumber, filters.pageSize]);
 
-  // 5. จำลอง Meta data ให้ Component <Pagination /> ตัวเดิมทำงานได้
+  // 5. จำลอง Meta data 
   const paginationMeta = {
     TotalCount: filteredCars.length,
     PageSize: filters.pageSize,
@@ -153,46 +150,37 @@ export default function CarList() {
           />
         </div>
 
-        {/* แสดงจำนวนผลลัพธ์การค้นหา */}
         <div className="text-sm text-gray-600 font-medium">
           พบรถทั้งหมด {filteredCars.length} คัน
         </div>
 
         <div className="overflow-x-auto w-full bg-white shadow-md rounded-lg">
-          <table className="table w-full">
-            <thead className="bg-gray-100">
+          <table className="table w-full table-zebra">
+            <thead className="bg-gray-200 text-gray-700">
               <tr>
                 <th className="text-center">ลำดับ</th>
-                <th className="text-center">แบรนด์</th>
-                <th className="text-center">ป้ายทะเบียน</th>
-                <th className="text-center">รุ่น</th>
-                <th className="text-center">ปีผลิต</th>
-                <th className="text-center">สี</th>
-                <th className="text-center">ราคา</th>
-                <th className="text-center">ราคาจอง</th>
                 <th className="text-center">รูปภาพ</th>
+                <th className="text-center">แบรนด์</th>
+                <th className="text-center">รุ่น</th>
+                <th className="text-center">ทะเบียน</th>
+                <th className="text-center">ปี/สี</th>
+                {/* 🚀 เพิ่มประเภทและไมล์ */}
+                <th className="text-center">ประเภท</th>
+                <th className="text-center">เลขไมล์</th>
+                <th className="text-center">ราคา</th>
                 <th className="text-center">ใช้งาน</th>
                 <th className="text-center">สถานะ</th>
                 <th className="text-center">จัดการ</th>
               </tr>
             </thead>
             <tbody>
-              {/* 🚀 เปลี่ยนจาก cars.map เป็น pagedCars.map */}
               {pagedCars.length > 0 ? (
                 pagedCars.map((car) => (
-                  <tr key={car.id} className="text-center align-middle hover:bg-gray-50 transition-colors">
-                    <td>{car.id}</td>
-                    <td className="font-medium">{car.brand?.name ?? "-"}</td>
-                    <td>{car.carRegistrationNumber ?? "-"}</td>
-                    <td>{car.model ?? "-"}</td>
-                    <td>{car.year ?? "-"}</td>
-                    <td>{car.color ?? "-"}</td>
-                    <td className="text-green-600 font-semibold">{car.price.toLocaleString()} ฿</td>
-                    <td className="text-blue-600 font-semibold">{car.bookingPrice?.toLocaleString() ?? 0} ฿</td>
+                  <tr key={car.id} className="text-center align-middle hover:bg-gray-50 transition-colors text-sm">
+                    <td className="font-semibold text-gray-500">{car.id}</td>
                     <td>
                       <div className="avatar flex justify-center">
-                        <div className="mask mask-squircle w-20 h-20 bg-gray-100">
-                          {/* 🚀 เช็ค carImages ก่อน (ตาม Interface Dto ตัวใหม่) */}
+                        <div className="mask mask-squircle w-16 h-16 bg-gray-100 border border-gray-200">
                           <img
                             src={car.carImages && car.carImages.length > 0 ? baseUrl + car.carImages[0] : "/placeholder.png"}
                             alt="รูปภาพรถ"
@@ -201,6 +189,30 @@ export default function CarList() {
                         </div>
                       </div>
                     </td>
+                    <td className="font-bold text-gray-700">{car.brand?.name ?? "-"}</td>
+                    <td className="text-gray-600">{car.model ?? "-"}</td>
+                    <td>
+                      <span className="bg-white border border-gray-300 px-2 py-1 rounded shadow-sm text-xs font-mono">
+                        {car.carRegistrationNumber ?? "-"}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="flex flex-col text-xs text-gray-500">
+                        <span>ปี {car.year ?? "-"}</span>
+                        <span>สี {car.color ?? "-"}</span>
+                      </div>
+                    </td>
+                    {/* 🚀 แปลง Enum เป็นภาษาไทย */}
+                    <td className="text-gray-600 text-xs">{getEnumLabel(car.carType, carTypeLabels) || "-"}</td>
+                    <td className="text-gray-600">{car.mileage?.toLocaleString() ?? 0} กม.</td>
+                    
+                    <td>
+                      <div className="flex flex-col">
+                        <span className="text-green-600 font-bold">{car.price.toLocaleString()} ฿</span>
+                        <span className="text-xs text-blue-500">(จอง {car.bookingPrice?.toLocaleString() ?? 0} ฿)</span>
+                      </div>
+                    </td>
+                    
                     <td>
                       <input
                         type="checkbox"
@@ -211,7 +223,7 @@ export default function CarList() {
                     </td>
                     <td>
                       <span
-                        className={`badge ${
+                        className={`badge badge-sm ${
                           car.isApproved ? "badge-success text-white" : "badge-warning"
                         }`}
                       >
@@ -219,15 +231,15 @@ export default function CarList() {
                       </span>
                     </td>
                     <td>
-                      <div className="flex justify-center gap-2">
+                      <div className="flex justify-center gap-1">
                         <button
-                          className="btn btn-sm btn-outline btn-warning"
+                          className="btn btn-xs btn-outline btn-warning"
                           onClick={() => handleEdit(car.id)}
                         >
                           แก้ไข
                         </button>
                         <button
-                          className="btn btn-sm btn-outline btn-error"
+                          className="btn btn-xs btn-outline btn-error"
                           onClick={() => handleDelete(car.id)}
                         >
                           ลบ
@@ -247,7 +259,6 @@ export default function CarList() {
           </table>
         </div>
 
-        {/* 🚀 ส่ง paginationMeta แบบจำลองไปให้ Component ทำงานต่อได้ปกติ */}
         {filteredCars.length > 0 && (
           <Pagination pagination={paginationMeta as any} onPageChange={handlePageChange} />
         )}

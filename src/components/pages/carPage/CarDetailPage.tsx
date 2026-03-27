@@ -2,7 +2,7 @@
 "use client";
 
 import { useGetCarByIdQuery } from "@/services/carApi";
-import { Share2, AlertTriangle, ShieldCheck, FileText } from "lucide-react";
+import { Share2, AlertTriangle, ShieldCheck, FileText, CalendarClock } from "lucide-react";
 import { useParams } from "next/navigation";
 import { baseUrl } from "@/utility/SD";
 import {
@@ -12,10 +12,12 @@ import {
   statusLabels,
 } from "../filters/CarFilters"; 
 import { getEnumLabel } from "@/utility/enumHelpers";
+import { useState } from "react";
 
 export default function CarDetailPage() {
   const params = useParams();
   const carId = Number(params?.id);
+  const [activeImageIndex, setActiveImageIndex] = useState(0); // 🚀 เพิ่ม State สำหรับจัดการการเลือกรูปหลัก
 
   const { data: car, isLoading, error } = useGetCarByIdQuery(carId);
 
@@ -33,30 +35,44 @@ export default function CarDetailPage() {
       </div>
     );
 
-  // 🚀 จัดการรูปภาพ (ใช้ carImages จาก DTO ใหม่)
+  // 🚀 จัดการรูปภาพ (ใช้ carImages จาก DTO ใหม่) และรองรับการเปลี่ยนรูปหลัก
   const mainImage =
     car.carImages && car.carImages.length > 0
-      ? baseUrl + car.carImages[0]
+      ? baseUrl + car.carImages[activeImageIndex]
       : "/placeholder.png";
 
-  // 🚀 ใช้ getEnumLabel แทนการเขียนโค้ดค้นหาแบบยาวๆ
   const displayCarType = getEnumLabel(car.carType, carTypeLabels);
   const displayEngineType = getEnumLabel(car.engineType, engineTypeLabels);
   const displayGearType = getEnumLabel(car.gearType, GearTypeLabels);
   const displayStatus = getEnumLabel(car.carStatus, statusLabels);
+
+  // 🚀 ฟังก์ชันจัดรูปแบบวันที่ให้อ่านง่าย
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "ไม่ระบุ";
+    const date = new Date(dateString);
+    return date.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
+  };
 
   return (
     <div className="max-w-7xl mx-auto p-4 lg:py-10 grid lg:grid-cols-12 gap-8 bg-gray-50 min-h-screen">
       {/* ─── ฝั่งซ้าย: รูปภาพ & ปุ่ม Action ─── */}
       <div className="lg:col-span-7 space-y-4">
         {/* รูปหลัก */}
-        <img
-          src={mainImage}
-          alt={car.model}
-          className="rounded-xl shadow-lg w-full h-[300px] sm:h-[400px] lg:h-[500px] object-cover bg-white"
-        />
+        <div className="relative">
+          <img
+            src={mainImage}
+            alt={car.model}
+            className="rounded-xl shadow-lg w-full h-[300px] sm:h-[400px] lg:h-[500px] object-cover bg-white transition-opacity duration-300"
+          />
+          {/* แสดงป้ายกำกับสถานะรถบนรูป */}
+          {car.carStatus !== "Available" && (
+            <div className="absolute top-4 right-4 bg-red-600 text-white px-4 py-2 rounded-lg font-bold shadow-md opacity-90">
+              {displayStatus}
+            </div>
+          )}
+        </div>
 
-        {/* 🚀 รูป Thumbnails (ถ้ามีรูปมากกว่า 1 รูป) */}
+        {/* 🚀 รูป Thumbnails (ถ้ามีรูปมากกว่า 1 รูป) และทำให้กดเปลี่ยนรูปหลักได้ */}
         {car.carImages && car.carImages.length > 1 && (
           <div className="flex gap-3 overflow-x-auto py-2 custom-scrollbar">
             {car.carImages.map((img, i) => (
@@ -64,7 +80,10 @@ export default function CarDetailPage() {
                 key={i}
                 src={baseUrl + img}
                 alt={`car thumb ${i}`}
-                className="w-24 h-16 sm:w-32 sm:h-20 rounded-lg border border-gray-200 object-cover cursor-pointer hover:scale-105 transition shadow-sm"
+                onClick={() => setActiveImageIndex(i)} // 🚀 ทำให้คลิกเปลี่ยนรูปได้
+                className={`w-24 h-16 sm:w-32 sm:h-20 rounded-lg border object-cover cursor-pointer hover:scale-105 transition shadow-sm ${
+                  activeImageIndex === i ? 'border-primary border-2 opacity-100' : 'border-gray-200 opacity-60'
+                }`}
               />
             ))}
           </div>
@@ -86,7 +105,16 @@ export default function CarDetailPage() {
           <h1 className="text-2xl lg:text-4xl font-extrabold text-gray-900 leading-tight">
             {car.brand?.name} {car.model}
           </h1>
-          <p className="text-gray-500 mt-2 text-lg">ปี {car.year}</p>
+          <div className="flex items-center gap-4 mt-2">
+            <span className="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm font-semibold">
+              ปี {car.year}
+            </span>
+            {/* 🚀 แสดงวันที่อัปเดตข้อมูลล่าสุด */}
+            <span className="flex items-center gap-1 text-xs text-gray-400">
+              <CalendarClock size={14} />
+              อัปเดตล่าสุด: {formatDate(car.updatedAt)}
+            </span>
+          </div>
         </div>
 
         {/* กล่องราคาและการจอง */}
@@ -125,7 +153,7 @@ export default function CarDetailPage() {
               </span>
             </label>
             <button 
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold w-full py-3.5 rounded-xl shadow-md transition disabled:bg-gray-300"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold w-full py-3.5 rounded-xl shadow-md transition disabled:bg-gray-300 disabled:cursor-not-allowed"
               disabled={car.carStatus !== "Available"}
             >
               {car.carStatus === "Available" ? "ดำเนินการจองรถ" : "รถคันนี้ไม่ว่าง"}
@@ -139,7 +167,7 @@ export default function CarDetailPage() {
           <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
             <div>
               <span className="text-gray-500 block mb-1">เลขทะเบียน</span>
-              <span className="font-semibold text-gray-800">{car.carRegistrationNumber || "-"}</span>
+              <span className="font-semibold text-gray-800">{car.carRegistrationNumber || "ไม่ระบุ"}</span>
             </div>
             <div>
               <span className="text-gray-500 block mb-1">เลขไมล์</span>
@@ -162,21 +190,25 @@ export default function CarDetailPage() {
               <span className="font-semibold text-gray-800">{displayGearType}</span>
             </div>
             
-            {/* 🚀 เพิ่มรหัสตัวถังและเครื่องยนต์ที่นี่ */}
-            <div className="col-span-2 grid grid-cols-2 gap-x-6">
+            {/* 🚀 รหัสตัวถังและเครื่องยนต์ */}
+            <div className="col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 border-t border-gray-100 pt-4 mt-2">
               <div>
                 <span className="text-gray-500 block mb-1">รหัสตัวถัง (VIN)</span>
-                <span className="font-mono text-gray-700 text-xs bg-gray-100 px-2 py-1 rounded">{car.carIdentificationNumber || "-"}</span>
+                <span className="font-mono text-gray-700 text-xs bg-gray-100 px-2 py-1 rounded select-all block w-max">
+                  {car.carIdentificationNumber || "ไม่มีข้อมูล"}
+                </span>
               </div>
               <div>
                 <span className="text-gray-500 block mb-1">หมายเลขเครื่องยนต์</span>
-                <span className="font-mono text-gray-700 text-xs bg-gray-100 px-2 py-1 rounded">{car.engineNumber || "-"}</span>
+                <span className="font-mono text-gray-700 text-xs bg-gray-100 px-2 py-1 rounded select-all block w-max">
+                  {car.engineNumber || "ไม่มีข้อมูล"}
+                </span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* 🚀 กล่องข้อมูลเพิ่มเติม (ประกัน, พรบ, ประวัติชน) */}
+        {/* กล่องข้อมูลเพิ่มเติม (ประกัน, พรบ, ประวัติชน) */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-4">
           <h3 className="text-lg font-bold text-gray-800 mb-2 border-b pb-2">ข้อมูลเพิ่มเติม</h3>
           
@@ -209,23 +241,23 @@ export default function CarDetailPage() {
           {car.description && (
             <div className="pt-3">
               <p className="text-sm font-semibold text-gray-800 mb-1">รายละเอียดจากผู้ขาย</p>
-              <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg leading-relaxed">
+              <p className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg leading-relaxed whitespace-pre-wrap">
                 {car.description}
               </p>
             </div>
           )}
         </div>
 
-        {/* 🚀 เพิ่มกล่องแสดงชื่อผู้ขาย (Seller) */}
+        {/* กล่องแสดงชื่อผู้ขาย (Seller) */}
         {car.seller && (
           <div className="bg-gray-100 p-4 rounded-xl flex items-center justify-between border border-gray-200">
             <div>
               <p className="text-xs text-gray-500 font-semibold mb-1">จัดจำหน่ายโดย</p>
-              <p className="font-bold text-gray-800 text-lg">{car.seller.user?.userName ?? "ผู้ขายยืนยันตัวตนแล้ว"}</p>
+              <p className="font-bold text-gray-800 text-lg">{car.seller.user?.userName ?? "ตัวแทนจำหน่ายมาตรฐาน"}</p>
             </div>
-            <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+            <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-sm">
               <ShieldCheck size={14} />
-              Verified
+              Verified Seller
             </div>
           </div>
         )}

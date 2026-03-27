@@ -26,7 +26,7 @@ export default function CarPage() {
   const [brandPage, setBrandPage] = useState(1);
   const brandPageSize = 10;
 
-  // 3. ดึงข้อมูลทั้งหมดในรอบเดียว (ไม่ต้องพึ่ง Pagination จากฝั่ง Server แล้ว)
+  // 3. ดึงข้อมูลทั้งหมดในรอบเดียว
   const { data: brandResult, isLoading: brandLoading, error: brandError } = useGetBrandAllQuery({ pageNumber: 1, pageSize: 100 });
   const { data: carResult, isLoading: carLoading, error: carError } = useGetCarAllQuery({ pageNumber: 1, pageSize: 1000 });
 
@@ -64,12 +64,10 @@ export default function CarPage() {
   const filteredCars = useMemo(() => {
     let data = [...allCars];
 
-    // กรองแบรนด์ (ถ้ามีการคลิกเลือกจากเมนูด้านซ้าย)
     if (selectedBrandId) {
       data = data.filter((c) => c.brandId === selectedBrandId);
     }
 
-    // กรองคำค้นหา (ชื่อรุ่น, ทะเบียน)
     if (carSearch) {
       const q = carSearch.toLowerCase();
       data = data.filter(
@@ -79,7 +77,6 @@ export default function CarPage() {
       );
     }
 
-    // กรองตัวเลข (ราคา, ปี, ไมล์)
     if (carFilters.minPrice !== undefined) data = data.filter((c) => c.price >= carFilters.minPrice!);
     if (carFilters.maxPrice !== undefined) data = data.filter((c) => c.price <= carFilters.maxPrice!);
     if (carFilters.minYear !== undefined) data = data.filter((c) => c.year >= carFilters.minYear!);
@@ -87,13 +84,11 @@ export default function CarPage() {
     if (carFilters.minMileage !== undefined) data = data.filter((c) => c.mileage >= carFilters.minMileage!);
     if (carFilters.maxMileage !== undefined) data = data.filter((c) => c.mileage <= carFilters.maxMileage!);
 
-    // กรอง Enum (ประเภท, เครื่องยนต์, เกียร์, สถานะ)
     if (carFilters.carType) data = data.filter((c) => c.carType === carFilters.carType);
     if (carFilters.engineType) data = data.filter((c) => c.engineType === carFilters.engineType);
     if (carFilters.gearType) data = data.filter((c) => c.gearType === carFilters.gearType);
     if (carFilters.carStatus) data = data.filter((c) => c.carStatus === carFilters.carStatus);
 
-    // จัดเรียง (Sorting)
     switch (carFilters.sortBy) {
       case "price": data.sort((a, b) => a.price - b.price); break;
       case "price_desc": data.sort((a, b) => b.price - a.price); break;
@@ -105,8 +100,8 @@ export default function CarPage() {
       default: data.sort((a, b) => b.id - a.id); break;
     }
 
-    // กรองเฉพาะรถที่ "เปิดใช้งาน" (isUsed = true) สำหรับหน้าบ้านลูกค้า
-    data = data.filter((c) => c.isUsed); // เอาคอมเมนต์ออกถ้าต้องการให้ลูกค้าเห็นเฉพาะรถที่ isUsed
+    // 🚀 เพิ่ม: กรองเฉพาะรถที่ "เปิดใช้งาน" (isUsed) และ "ตรวจสอบแล้ว" (isApproved)
+    data = data.filter((c) => c.isUsed && c.isApproved);
 
     return data;
   }, [allCars, carFilters, carSearch, selectedBrandId]);
@@ -129,7 +124,6 @@ export default function CarPage() {
   // Handlers
   // -----------------------------------------
   const handleSelectBrand = (id: number) => {
-    // ถ้าคลิกแบรนด์เดิมซ้ำ ให้ยกเลิกการเลือก
     setSelectedBrandId(id === selectedBrandId ? null : id);
     setCarFilters((prev) => ({ ...prev, pageNumber: 1 }));
   };
@@ -144,7 +138,6 @@ export default function CarPage() {
         ค้นหารถยนต์ของเรา
       </h1>
 
-      {/* Filter ด้านบน */}
       <CarFilters
         filters={carFilters}
         setFilters={setCarFilters}
@@ -152,7 +145,6 @@ export default function CarPage() {
         setSearch={setCarSearch}
       />
 
-      {/* เค้าโครงสองคอลัมน์ */}
       <div className="flex flex-col md:flex-row gap-6">
         
         {/* ฝั่งซ้าย: แบรนด์รถยนต์ */}
@@ -165,7 +157,7 @@ export default function CarPage() {
             value={brandSearch}
             onChange={(e) => {
               setBrandSearch(e.target.value);
-              setBrandPage(1); // ค้นหาใหม่ให้กลับไปหน้าแรก
+              setBrandPage(1); 
             }}
           />
 
@@ -182,8 +174,9 @@ export default function CarPage() {
                   }`}
                 >
                   <div className="bg-white p-1 rounded border border-gray-200">
+                    {/* 🚀 แก้ไข: การดึงรูปภาพของ Brand ให้ปลอดภัยขึ้น */}
                     <img
-                      src={baseUrl + brand.carImages}
+                      src={brand.carImages && brand.carImages.length > 0 ? baseUrl + brand.carImages[0] : "/placeholder.png"}
                       alt={brand.name}
                       className="w-7 h-7 object-contain"
                     />
@@ -196,7 +189,6 @@ export default function CarPage() {
             )}
           </ul>
 
-          {/* Pagination ของฝั่ง Brand */}
           {filteredBrands.length > brandPageSize && (
             <div className="mt-4 flex justify-center border-t pt-4">
               <Pagination
@@ -245,7 +237,6 @@ export default function CarPage() {
             </div>
           )}
 
-          {/* Pagination ของฝั่ง รถยนต์ */}
           {filteredCars.length > carFilters.pageSize && (
             <div className="mt-10 flex justify-center">
               <Pagination
