@@ -14,7 +14,6 @@ import {
   useUpdateCarMutation,
 } from "@/services/carApi";
 import { baseUrl } from "@/utility/SD";
-import { CarCreateFormValues, CarUpdateFormValues } from "./CarFormValues";
 import {
   createValidationSchema,
   updateValidationSchema,
@@ -29,11 +28,17 @@ import {
 } from "../filters/CarFilters";
 import { useGetBrandAllQuery } from "@/services/brandApi";
 import { SelectFieldWithImage } from "../selectField/SelectFieldWithImage";
-import { InputField } from "../inputField/InputField";
-import type { CarCreateDto, CarUpdateDto } from "@/@types/Dto";
+import { CarCreateDto, CarUpdateDto } from "@/@types/Dto";
 
 const MySwal = withReactContent(Swal);
 const redirectPath = "/manages/car";
+const MAX_FILE_SIZE_MB = 5;
+
+type CarFormValues = typeof baseInitialValues & {
+  isUsed?: boolean;
+  isDeleted?: boolean;
+};
+
 const baseInitialValues = {
   brandId: "",
   sellerId: 1,
@@ -43,172 +48,142 @@ const baseInitialValues = {
   model: "",
   year: new Date().getFullYear(),
   price: 0,
-  reservationPrice: 0,
+  bookingPrice: 0,
   mileage: 0,
   color: "",
-  engineType: 0,
-  gearType: 0,
-  carType: 0,
-  status: 0,
+  engineType: "", 
+  gearType: "",   
+  carType: "",    
+  carStatus: "",  
   description: "",
-  imageFile: null,
+  isCollisionHistory: false,
+  insurance: "",
+  act: "",
+  newImages: undefined as File[] | undefined,
 };
 
 export default function CarForm() {
   const router = useRouter();
-  const params = useParams();
-  const carId = params?.id;
+  const carId = useParams()?.id;
   const isEditMode = Boolean(carId);
 
-  const { data: result, isLoading } = useGetCarByIdQuery(Number(carId), {
-    skip: !isEditMode,
-  });
-
-  const { data: brands } = useGetBrandAllQuery({
-    pageNumber: 1,
-    pageSize: 100,
-  });
+  const { data: result, isLoading } = useGetCarByIdQuery(Number(carId), { skip: !isEditMode });
+  const { data: brands } = useGetBrandAllQuery({ pageNumber: 1, pageSize: 100 });
+  
   const [createCar] = useCreateCarMutation();
   const [updateCar] = useUpdateCarMutation();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  const [initialValues, setInitialValues] = useState<
-    CarCreateFormValues | CarUpdateFormValues
-  >(
-    isEditMode
-      ? {
-          ...baseInitialValues,
-          isUsed: false,
-          isDeleted: false,
-        }
-      : {
-          ...baseInitialValues,
-          isUsed: false, // คุณอาจจะไม่ต้องใส่ field นี้หากไม่อยู่ใน `CarCreateFormValues`
-          isDeleted: false,
-        }
-  );
+  const [initialValues, setInitialValues] = useState<CarFormValues>({
+    ...baseInitialValues,
+    ...(isEditMode && { isUsed: false, isDeleted: false }),
+  });
 
   useEffect(() => {
     if (isEditMode && result) {
       setInitialValues({
-        brandId: result.brandId?.toString() ?? "",
-        sellerId: result.sellerId ?? 1,
-        carRegistrationNumber: result.carRegistrationNumber ?? "",
-        carIdentificationNumber: result.carIdentificationNumber ?? "",
-        engineNumber: result.engineNumber ?? "",
-        model: result.model ?? "",
-        year: result.year ?? new Date().getFullYear(),
-        price: result.price ?? 0,
-        reservationPrice: result.reservationPrice ?? 0,
-        mileage: result.mileage ?? 0,
-        color: result.color ?? "",
-        engineType: result.engineType ?? 0,
-        gearType: result.gearType ?? 0,
-        carType: result.carType ?? 0,
-        status: result.status ?? 0,
-        description: result.description ?? "",
-        imageFile: null,
-        isUsed: result.isUsed ?? false,
-        isDeleted: result.isDeleted ?? false,
-      } satisfies CarUpdateFormValues);
+        ...baseInitialValues, 
+        ...result,            
+        brandId: result.brandId?.toString() ?? "", 
+        newImages: undefined, 
+      });
     }
   }, [isEditMode, result]);
 
   useEffect(() => {
-    if (isEditMode && result?.imageUrl) {
-      setPreviewUrl(baseUrl + result.imageUrl);
+    if (isEditMode && result?.carImages?.[0]) {
+      setPreviewUrl(baseUrl + result.carImages[0]);
     }
-  }, [isEditMode, result?.imageUrl]);
+  }, [isEditMode, result?.carImages]);
 
-  const handleSubmit = async (
-    values: CarCreateFormValues | CarUpdateFormValues
-  ) => {
-    const ev = Object.values;
-    const baseDto = {
-      sellerId: values.sellerId,
-      brandId: Number(values.brandId),
-      carRegistrationNumber: values.carRegistrationNumber,
-      carIdentificationNumber: values.carIdentificationNumber,
-      engineNumber: values.engineNumber,
-      model: values.model,
-      year: values.year,
-      price: values.price,
-      bookingPrice: values.reservationPrice,
-      mileage: values.mileage,
-      color: values.color,
-      engineType: ev(EngineType)[values.engineType],
-      gearType: ev(GearType)[values.gearType],
-      carType: ev(CarType)[values.carType],
-      carStatus: ev(CarStatus)[values.status],
-      description: values.description,
-      isCollisionHistory: false,
-      newImages: values.imageFile ? [values.imageFile] : undefined,
+  useEffect(() => {
+    return () => {
+      if (previewUrl && previewUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
+  const handleSubmit = async (values: CarFormValues) => {
+    const mappedValues = {
+      brandId: Number(values.brandId), 
     };
 
-    if (isEditMode) {
-      const updateValues = values as CarUpdateFormValues;
-      const updateDto: CarUpdateDto = {
-        ...baseDto,
-        isUsed: updateValues.isUsed,
-        isDeleted: updateValues.isDeleted,
-        updatedAt: new Date().toISOString(),
-      };
-      await updateCar({ carId: Number(carId), data: updateDto }).unwrap();
-      await showAlert("อัปเดตรถสำเร็จ");
-    } else {
-      const createDto: CarCreateDto = {
-        ...baseDto,
-        createdAt: new Date().toISOString(),
-      };
-      await createCar(createDto).unwrap();
-      await showAlert("เพิ่มรถสำเร็จ");
-    }
+    try {
+      if (isEditMode) {
+        const updatePayload: CarUpdateDto = { 
+          ...values, 
+          ...mappedValues, 
+          updatedAt: new Date().toISOString() 
+        } as CarUpdateDto;
 
-    router.push(redirectPath);
+        await updateCar({ carId: Number(carId), data: updatePayload }).unwrap();
+        await showAlert("อัปเดตรถสำเร็จ");
+      } else {
+        const createPayload: CarCreateDto = { 
+          ...values, 
+          ...mappedValues, 
+          createdAt: new Date().toISOString() 
+        } as CarCreateDto;
+
+        await createCar(createPayload).unwrap();
+        await showAlert("เพิ่มรถสำเร็จ");
+      }
+      router.push(redirectPath);
+    } catch (error) {
+      MySwal.fire({
+        icon: "error",
+        title: "เกิดข้อผิดพลาด",
+        text: "ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง",
+      });
+      console.error(error);
+    }
   };
 
   const showAlert = (message: string) =>
-    MySwal.fire({
-      icon: "success",
-      title: "สำเร็จ",
-      text: message,
-      timer: 1500,
-      showConfirmButton: false,
-    });
+    MySwal.fire({ icon: "success", title: "สำเร็จ", text: message, timer: 1500, showConfirmButton: false });
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.currentTarget.files?.[0] || null;
-    formik.setFieldValue("imageFile", file);
+    
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setPreviewUrl(reader.result as string);
-      reader.readAsDataURL(file);
+      if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+        MySwal.fire({
+          icon: "warning",
+          title: "ไฟล์มีขนาดใหญ่เกินไป",
+          text: `กรุณาอัปโหลดรูปภาพที่มีขนาดไม่เกิน ${MAX_FILE_SIZE_MB}MB`,
+        });
+        event.target.value = "";
+        return;
+      }
+
+      formik.setFieldValue("newImages", [file]);
+      setPreviewUrl(URL.createObjectURL(file)); 
     } else {
+      formik.setFieldValue("newImages", undefined);
       setPreviewUrl(null);
     }
   };
 
-  const formik = useFormik<CarCreateFormValues | CarUpdateFormValues>({
+  const formik = useFormik<CarFormValues>({
     enableReinitialize: true,
     initialValues,
-    validationSchema: isEditMode
-      ? updateValidationSchema
-      : createValidationSchema,
+    validationSchema: isEditMode ? updateValidationSchema : createValidationSchema,
     onSubmit: handleSubmit,
   });
 
-  const brandOptions =
-    brands?.result
-      .filter((brand) => brand.isUsed)
-      .map((brand) => ({
-        value: brand.id.toString(),
-        label: brand.name,
-        imageUrl: baseUrl + brand.imageUrl,
-      })) ?? [];
+  const brandOptions = brands?.result
+    ?.filter((brand) => brand.isUsed && brand.id !== undefined)
+    .map((brand) => ({
+      value: brand.id!.toString(),
+      label: brand.name,
+      imageUrl: baseUrl + brand.carImages,
+    })) ?? [];
 
   if (isEditMode && isLoading) return <p>กำลังโหลดข้อมูล...</p>;
 
-  return (
+
+return (
     <div className="min-h-screen bg-base-200 py-10 px-4">
       <div className="w-full max-w-7xl mx-auto bg-base-100 shadow-xl rounded-2xl overflow-hidden">
         <div className="grid grid-cols-1 lg:grid-cols-2">
@@ -252,12 +227,12 @@ export default function CarForm() {
               {/* ป้ายทะเบียน */}
               <div className="col-span-2 md:col-span-1">
                 <label className="block text-sm font-semibold mb-1">
-                  เลขทะเบียนเดิมรถยนต์
+                  เลขทะเบียนรถยนต์
                 </label>
                 <input
                   type="text"
                   name="carRegistrationNumber"
-                  placeholder="กรอกป้ายทะเบียน เช่น กค-8888 กทมท"
+                  placeholder="กรอกป้ายทะเบียน เช่น กค-8888 กทม"
                   value={formik.values.carRegistrationNumber}
                   onChange={formik.handleChange}
                   className="input input-bordered w-full"
@@ -267,7 +242,7 @@ export default function CarForm() {
               {/* หมายเลขตัวถัง */}
               <div className="col-span-2 md:col-span-1">
                 <label className="block text-sm font-semibold mb-1">
-                  หมายเลขตัวถัง (VIN) จำนวนของหมายเลขตัวถังทั้ง 17 หลัก
+                  หมายเลขตัวถัง (VIN) 17 หลัก
                 </label>
                 <input
                   type="text"
@@ -282,13 +257,12 @@ export default function CarForm() {
               {/* เลขเครื่องยนต์ */}
               <div className="col-span-2 md:col-span-1">
                 <label className="block text-sm font-semibold mb-1">
-                  หมายเลขเครื่องยนต์ เริ่มต้นด้วยชื่อรหัสเครื่องยนต์ (เช่น 1NZ,
-                  HR15, 4JJ1)
+                  หมายเลขเครื่องยนต์
                 </label>
                 <input
                   type="text"
                   name="engineNumber"
-                  placeholder="จำนวนไม่แน่นอน 7-12 หลัก 1NZ1234567"
+                  placeholder="เช่น 1NZ1234567"
                   value={formik.values.engineNumber}
                   onChange={formik.handleChange}
                   className="input input-bordered w-full"
@@ -313,12 +287,12 @@ export default function CarForm() {
               {/* ปีที่ผลิตรถ */}
               <div className="col-span-2 md:col-span-1">
                 <label className="block text-sm font-semibold mb-1">
-                  ปีที่ผลิตรถ
+                  ปีที่ผลิต (Year)
                 </label>
                 <input
                   type="number"
                   name="year"
-                  placeholder="กรอกปีที่ผลิตรถ"
+                  placeholder="เช่น 2022"
                   value={formik.values.year}
                   onChange={formik.handleChange}
                   className="input input-bordered w-full"
@@ -328,7 +302,7 @@ export default function CarForm() {
               {/* ราคารถยนต์ */}
               <div className="col-span-2 md:col-span-1">
                 <label className="block text-sm font-semibold mb-1">
-                  ราคารถยนต์
+                  ราคารถยนต์ (บาท)
                 </label>
                 <input
                   type="number"
@@ -343,13 +317,15 @@ export default function CarForm() {
               {/* ราคาจอง */}
               <div className="col-span-2 md:col-span-1">
                 <label className="block text-sm font-semibold mb-1">
-                  ราคาจองรถยนต์
+                  ราคาจองรถยนต์ (บาท)
                 </label>
-                <InputField
-                  name="reservationPrice"
+                <input
+                  type="number"
+                  name="bookingPrice"
                   placeholder="กรอกราคาจองรถยนต์"
-                  value={formik.values.reservationPrice}
+                  value={formik.values.bookingPrice}
                   onChange={formik.handleChange}
+                  className="input input-bordered w-full"
                 />
               </div>
 
@@ -383,114 +359,145 @@ export default function CarForm() {
                 />
               </div>
 
+              {/* เครื่องยนต์ */}
               <div className="col-span-2 md:col-span-1">
                 <label className="block text-sm font-semibold mb-1">
-                  เครื่องยนต์
+                  ประเภทเครื่องยนต์
                 </label>
+                {/* 🚀 แก้ไข: นำ ?.toString() และ Number(v) ออก */}
                 <SelectField
-                  value={formik.values.engineType?.toString()}
-                  onChange={(v) =>
-                    formik.setFieldValue(
-                      "engineType",
-                      v === "" ? undefined : Number(v)
-                    )
-                  }
-                  options={enumToOptionsWithLabels(
-                    EngineType,
-                    engineTypeLabels
-                  )}
+                  value={formik.values.engineType}
+                  onChange={(v) => formik.setFieldValue("engineType", v === "" ? undefined : v)}
+                  options={enumToOptionsWithLabels(EngineType, engineTypeLabels)}
                 />
               </div>
 
+              {/* เกียร์ */}
               <div className="col-span-2 md:col-span-1">
                 <label className="block text-sm font-semibold mb-1">
-                  เกียร์รถยนต์
+                  ระบบเกียร์
                 </label>
+                {/* 🚀 แก้ไข: นำ ?.toString() และ Number(v) ออก */}
                 <SelectField
-                  value={formik.values.gearType?.toString()}
-                  onChange={(v) =>
-                    formik.setFieldValue(
-                      "gearType",
-                      v === "" ? undefined : Number(v)
-                    )
-                  }
+                  value={formik.values.gearType}
+                  onChange={(v) => formik.setFieldValue("gearType", v === "" ? undefined : v)}
                   options={enumToOptionsWithLabels(GearType, GearTypeLabels)}
                 />
               </div>
 
+              {/* ประเภทรถ */}
               <div className="col-span-2 md:col-span-1">
                 <label className="block text-sm font-semibold mb-1">
                   ประเภทรถยนต์
                 </label>
+                {/* 🚀 แก้ไข: นำ ?.toString() และ Number(v) ออก */}
                 <SelectField
-                  value={formik.values.carType?.toString()}
-                  onChange={(v) =>
-                    formik.setFieldValue(
-                      "carType",
-                      v === "" ? undefined : Number(v)
-                    )
-                  }
+                  value={formik.values.carType}
+                  onChange={(v) => formik.setFieldValue("carType", v === "" ? undefined : v)}
                   options={enumToOptionsWithLabels(CarType, carTypeLabels)}
                   placeholder="เลือกประเภทรถของคุณ"
                 />
               </div>
 
+              {/* สถานะรถ */}
               <div className="col-span-2 md:col-span-1">
                 <label className="block text-sm font-semibold mb-1">
                   สถานะรถ
                 </label>
+                {/* 🚀 แก้ไข: นำ ?.toString() และ Number(v) ออก */}
                 <SelectField
-                  value={formik.values.status?.toString()}
-                  onChange={(v) =>
-                    formik.setFieldValue(
-                      "status",
-                      v === "" ? undefined : Number(v)
-                    )
-                  }
-                  options={enumToOptionsWithLabels(Status, statusLabels)}
+                  value={formik.values.carStatus}
+                  onChange={(v) => formik.setFieldValue("carStatus", v === "" ? undefined : v)}
+                  options={enumToOptionsWithLabels(CarStatus, statusLabels)}
                   placeholder="เลือกสถานะรถ"
                 />
               </div>
 
+              {/* ประกันภัย (Insurance) */}
               <div className="col-span-2 md:col-span-1">
+                <label className="block text-sm font-semibold mb-1">
+                  ประกันภัยรถยนต์
+                </label>
+                <input
+                  type="text"
+                  name="insurance"
+                  placeholder="เช่น ป.1 หมดอายุ 12/2026"
+                  value={formik.values.insurance}
+                  onChange={formik.handleChange}
+                  className="input input-bordered w-full"
+                />
+              </div>
+
+              {/* พ.ร.บ. (Act) */}
+              <div className="col-span-2 md:col-span-1">
+                <label className="block text-sm font-semibold mb-1">
+                  พ.ร.บ. (ACT)
+                </label>
+                <input
+                  type="text"
+                  name="act"
+                  placeholder="ระบุรายละเอียด พ.ร.บ."
+                  value={formik.values.act}
+                  onChange={formik.handleChange}
+                  className="input input-bordered w-full"
+                />
+              </div>
+
+              {/* คำอธิบาย */}
+              <div className="col-span-2">
                 <label className="block text-sm font-semibold mb-1">
                   คำอธิบายเพิ่มเติม
                 </label>
                 <textarea
                   name="description"
                   rows={3}
-                  placeholder="กรอกคำอธิบาย"
+                  placeholder="กรอกคำอธิบายเพิ่มเติมเกี่ยวกับรถ"
                   value={formik.values.description}
                   onChange={formik.handleChange}
                   className="textarea textarea-bordered w-full"
                 />
               </div>
 
-              {isEditMode && (
-                <div className="col-span-2 md:col-span-1">
-                  <label className="label cursor-pointer">
-                    <span className="label-text">เปิดใช้งานรถคันนี้</span>
-                    <input
-                      type="checkbox"
-                      name="isUsed"
-                      checked={(formik.values as CarUpdateFormValues).isUsed}
-                      onChange={formik.handleChange}
-                      className="checkbox ml-2 mr-3"
-                    />
-                  </label>
+              {/* Checkboxes ด้านล่าง (ชนหนัก / ใช้งาน / ลบ) */}
+              <div className="col-span-2 flex flex-wrap gap-6">
+                
+                <label className="label cursor-pointer flex gap-2">
+                  <input
+                    type="checkbox"
+                    name="isCollisionHistory"
+                    checked={formik.values.isCollisionHistory}
+                    onChange={formik.handleChange}
+                    className="checkbox checkbox-warning"
+                  />
+                  <span className="label-text font-semibold">มีประวัติการชนหนัก/พลิกคว่ำ/จมน้ำ</span>
+                </label>
 
-                  <label className="label cursor-pointer mt-4">
-                    <span className="label-text text-red-500">ลบรถคันนี้</span>
-                    <input
-                      type="checkbox"
-                      name="isDelete"
-                      checked={(formik.values as CarUpdateFormValues).isDeleted}
-                      onChange={formik.handleChange}
-                      className="checkbox checkbox-error ml-2"
-                    />
-                  </label>
-                </div>
-              )}
+                {isEditMode && (
+                  <>
+                    <label className="label cursor-pointer flex gap-2">
+                      <input
+                        type="checkbox"
+                        name="isUsed"
+                        checked={formik.values.isUsed}
+                        onChange={formik.handleChange}
+                        className="checkbox checkbox-primary"
+                      />
+                      <span className="label-text">เปิดใช้งานรถคันนี้</span>
+                    </label>
+
+                    <label className="label cursor-pointer flex gap-2">
+                      <input
+                        type="checkbox"
+                        name="isDeleted"
+                        checked={formik.values.isDeleted}
+                        onChange={formik.handleChange}
+                        className="checkbox checkbox-error"
+                      />
+                      <span className="label-text text-error">ลบรถคันนี้</span>
+                    </label>
+                  </>
+                )}
+              </div>
 
               {/* อัปโหลดรูป */}
               <div className="col-span-2">
@@ -507,12 +514,14 @@ export default function CarForm() {
               </div>
 
               {/* ปุ่ม Submit */}
-              <div className="col-span-2">
+              <div className="col-span-2 mt-4">
                 <button
                   type="submit"
-                  className="btn btn-primary w-full"
+                  className="btn btn-primary w-full text-lg flex justify-center items-center gap-2"
                   disabled={formik.isSubmitting}
                 >
+                  {/* 🚀 เพิ่ม Loading Spinner */}
+                  {formik.isSubmitting && <span className="loading loading-spinner loading-sm"></span>}
                   {isEditMode ? "อัปเดตรถยนต์" : "บันทึกรถยนต์"}
                 </button>
               </div>

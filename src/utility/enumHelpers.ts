@@ -4,13 +4,20 @@ export const enumToOptionsWithLabels = (
   enumObj: any,
   labels: Record<string, string>
 ): { label: string; value: string }[] => {
-  return Object.keys(enumObj)
-    .filter((key) => !isNaN(Number(key))) // รับเฉพาะ numeric keys
-    .map((key) => {
-      const enumKey = enumObj[key]; // eg. "Manual"
-      return {
-        value: key, // eg. "0"
-        label: labels[enumKey] || enumKey, // eg. "ด้วยมือ"
-      };
-    });
+  // สำหรับ String Enum เราสามารถดึง Object.values ออกมาใช้เป็น value ได้เลย
+  return Object.values(enumObj).map((enumValue: any) => {
+    return {
+      value: String(enumValue), // เช่น "Gasoline"
+      label: labels[enumValue] || String(enumValue), // เช่น "น้ำมันเบนซิน" หรือถ้าไม่เจอใน label ก็แสดง "Gasoline"
+    };
+  });
+};
+
+// 🚀 ฟังก์ชันใหม่ สำหรับแปลค่า Enum คำเดียวให้เป็น Label ภาษาไทย
+export const getEnumLabel = (
+  value: string | undefined | null,
+  labels: Record<string, string>
+): string => {
+  if (!value) return "-"; // ถ้าไม่มีค่า ส่งขีดกลับไป
+  return labels[value] || value; // ถ้าเจอแปลไทยให้คืนค่าแปล ถ้าไม่เจอให้คืนค่าภาษาอังกฤษเดิม
 };

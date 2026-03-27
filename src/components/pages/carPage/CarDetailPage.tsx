@@ -2,10 +2,16 @@
 "use client";
 
 import { useGetCarByIdQuery } from "@/services/carApi";
-import {
-  Share2,
-} from "lucide-react";
+import { Share2, AlertTriangle, ShieldCheck, FileText } from "lucide-react";
 import { useParams } from "next/navigation";
+import { baseUrl } from "@/utility/SD";
+import {
+  carTypeLabels,
+  engineTypeLabels,
+  GearTypeLabels,
+  statusLabels,
+} from "../filters/CarFilters"; 
+import { getEnumLabel } from "@/utility/enumHelpers";
 
 export default function CarDetailPage() {
   const params = useParams();
@@ -13,95 +19,230 @@ export default function CarDetailPage() {
 
   const { data: car, isLoading, error } = useGetCarByIdQuery(carId);
 
-  if (isLoading) return <p className="p-4">กำลังโหลด...</p>;
-  if (error || !car) return <p className="p-4 text-red-500">ไม่พบรถยนต์</p>;
+  if (isLoading)
+    return (
+      <div className="min-h-screen flex justify-center items-center bg-gray-50">
+        <span className="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+    );
+
+  if (error || !car)
+    return (
+      <div className="min-h-screen flex justify-center items-center bg-gray-50 text-red-500 font-bold text-xl">
+        ไม่พบข้อมูลรถยนต์
+      </div>
+    );
+
+  // 🚀 จัดการรูปภาพ (ใช้ carImages จาก DTO ใหม่)
+  const mainImage =
+    car.carImages && car.carImages.length > 0
+      ? baseUrl + car.carImages[0]
+      : "/placeholder.png";
+
+  // 🚀 ใช้ getEnumLabel แทนการเขียนโค้ดค้นหาแบบยาวๆ
+  const displayCarType = getEnumLabel(car.carType, carTypeLabels);
+  const displayEngineType = getEnumLabel(car.engineType, engineTypeLabels);
+  const displayGearType = getEnumLabel(car.gearType, GearTypeLabels);
+  const displayStatus = getEnumLabel(car.carStatus, statusLabels);
 
   return (
-   <div className="max-w-7xl mx-auto p-6 lg:py-10 grid lg:grid-cols-12 gap-8 bg-gray-50 min-h-screen">
-      {/* Left Section - img & thumbnails */}
+    <div className="max-w-7xl mx-auto p-4 lg:py-10 grid lg:grid-cols-12 gap-8 bg-gray-50 min-h-screen">
+      {/* ─── ฝั่งซ้าย: รูปภาพ & ปุ่ม Action ─── */}
       <div className="lg:col-span-7 space-y-4">
+        {/* รูปหลัก */}
         <img
-          src={car.imageUrl}
+          src={mainImage}
           alt={car.model}
-          width={800}
-          height={500}
-          className="rounded-xl shadow-lg w-full object-cover"
+          className="rounded-xl shadow-lg w-full h-[300px] sm:h-[400px] lg:h-[500px] object-cover bg-white"
         />
-        {/* ลบ .map() หาก car.imageUrl เป็น string เดี่ยว */}
-        {/* <div className="flex gap-3 overflow-x-auto">
-          {[car.imageUrl].map((imageUrl, i) => (
-            <img
-              key={i}
-              src={imageUrl}
-              alt={`car thumb ${i}`}
-              width={100}
-              height={70}
-              className="rounded border border-gray-300 hover:scale-105 transition"
-            />
-          ))}
-        </div> */}
 
-        <div className="flex gap-4 mt-4">
-          <button className="bg-blue-600 text-white w-full py-2 rounded">🚗 CAR LIVE TOUR</button>
-          <button className="bg-green-600 text-white w-full py-2 rounded">🛞 ทดลองขับ</button>
+        {/* 🚀 รูป Thumbnails (ถ้ามีรูปมากกว่า 1 รูป) */}
+        {car.carImages && car.carImages.length > 1 && (
+          <div className="flex gap-3 overflow-x-auto py-2 custom-scrollbar">
+            {car.carImages.map((img, i) => (
+              <img
+                key={i}
+                src={baseUrl + img}
+                alt={`car thumb ${i}`}
+                className="w-24 h-16 sm:w-32 sm:h-20 rounded-lg border border-gray-200 object-cover cursor-pointer hover:scale-105 transition shadow-sm"
+              />
+            ))}
+          </div>
+        )}
+
+        <div className="flex flex-col sm:flex-row gap-4 mt-6">
+          <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold w-full py-3 rounded-lg shadow-sm transition">
+            🚗 CAR LIVE TOUR
+          </button>
+          <button className="bg-green-600 hover:bg-green-700 text-white font-semibold w-full py-3 rounded-lg shadow-sm transition">
+            🛞 นัดหมายทดลองขับ
+          </button>
         </div>
       </div>
 
-      {/* Right Section - Car Info */}
+      {/* ─── ฝั่งขวา: ข้อมูลรถยนต์ ─── */}
       <div className="lg:col-span-5 space-y-6">
-        <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
-          {car.model}
-        </h1>
+        <div>
+          <h1 className="text-2xl lg:text-4xl font-extrabold text-gray-900 leading-tight">
+            {car.brand?.name} {car.model}
+          </h1>
+          <p className="text-gray-500 mt-2 text-lg">ปี {car.year}</p>
+        </div>
 
-        <div className="bg-white rounded-lg p-6 border shadow-sm space-y-4">
-          <p className="text-lg font-semibold text-green-600">ราคาขาย</p>
-          <p className="text-3xl font-bold text-gray-800">
-            {car.price.toLocaleString()} บาท
-          </p>
-          <div className="text-sm text-gray-500">
-            หมายเหตุ: ราคานี้ไม่รวมภาษีมูลค่าเพิ่ม
+        {/* กล่องราคาและการจอง */}
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-4">
+          <div className="flex justify-between items-end">
+            <div>
+              <p className="text-sm font-semibold text-green-600 mb-1">ราคาขาย</p>
+              <p className="text-4xl font-black text-gray-800">
+                {car.price.toLocaleString()} ฿
+              </p>
+            </div>
+            <div className="text-right">
+              <span
+                className={`px-3 py-1 rounded-full text-sm font-bold ${
+                  car.carStatus === "Available"
+                    ? "bg-green-100 text-green-700"
+                    : car.carStatus === "Booked"
+                    ? "bg-yellow-100 text-yellow-700"
+                    : "bg-red-100 text-red-700"
+                }`}
+              >
+                {displayStatus}
+              </span>
+            </div>
+          </div>
+          <div className="text-xs text-gray-400">
+            * ราคานี้อาจยังไม่รวมค่าธรรมเนียมและภาษีมูลค่าเพิ่ม
           </div>
 
-          <div className="border-t pt-4 space-y-3">
-            <label className="flex items-center gap-2 text-gray-700">
-              <input type="radio" />
-              <span>จองมัดจำ</span>
-              <span className="ml-auto text-green-700 font-medium">
-                {car.reservationPrice?.toLocaleString() || "-"} บาท
+          <div className="border-t border-gray-100 pt-5 space-y-4 mt-2">
+            <label className="flex items-center gap-3 text-gray-700 cursor-pointer">
+              <input type="radio" className="radio radio-primary radio-sm" defaultChecked />
+              <span className="font-medium">จองมัดจำรถคันนี้</span>
+              <span className="ml-auto text-primary font-bold text-lg">
+                {car.bookingPrice?.toLocaleString() || "0"} ฿
               </span>
             </label>
-            <button className="bg-emerald-600 text-white w-full py-2 rounded">จองรถคันนี้</button>
+            <button 
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold w-full py-3.5 rounded-xl shadow-md transition disabled:bg-gray-300"
+              disabled={car.carStatus !== "Available"}
+            >
+              {car.carStatus === "Available" ? "ดำเนินการจองรถ" : "รถคันนี้ไม่ว่าง"}
+            </button>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg p-6 border shadow-sm">
-          <ul className="space-y-3 text-sm text-gray-700">
-            <li><b>เจ้าของรถ:</b> {car.seller?.userId}</li>
-            <li><b>ยี่ห้อ:</b> {car.brand?.name}</li>
-            <li><b>รุ่น:</b> {car.model}</li>
-            <li><b>carRegistrationNumber:</b> {car.carRegistrationNumber}</li>
-            <li><b>carIdentificationNumber:</b> {car.carIdentificationNumber}</li>
-            <li><b>engineNumber:</b> {car.engineNumber}</li>
-            <li><b>ปี:</b> {car.year}</li>
-            <li><b>ไมล์:</b> {car.mileage.toLocaleString()} กม.</li>
-            <li><b>สี:</b> {car.color}</li>
-            <li><b>description:</b> {car.description}</li>
-            <li><b>status:</b> {car.status}</li>
-            <li><b>engineType:</b> {car.engineType}</li>
-            <li><b>gearType:</b> {car.gearType}</li>
-            <li><b>carType:</b> {car.carType}</li>
-            {/* <li><b>จังหวัด:</b> {car.location}</li> */}
-          </ul>
+        {/* กล่องข้อมูลจำเพาะ */}
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+          <h3 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">ข้อมูลจำเพาะ</h3>
+          <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
+            <div>
+              <span className="text-gray-500 block mb-1">เลขทะเบียน</span>
+              <span className="font-semibold text-gray-800">{car.carRegistrationNumber || "-"}</span>
+            </div>
+            <div>
+              <span className="text-gray-500 block mb-1">เลขไมล์</span>
+              <span className="font-semibold text-gray-800">{car.mileage.toLocaleString()} กม.</span>
+            </div>
+            <div>
+              <span className="text-gray-500 block mb-1">สีรถ</span>
+              <span className="font-semibold text-gray-800">{car.color}</span>
+            </div>
+            <div>
+              <span className="text-gray-500 block mb-1">ประเภทรถ</span>
+              <span className="font-semibold text-gray-800">{displayCarType}</span>
+            </div>
+            <div>
+              <span className="text-gray-500 block mb-1">เครื่องยนต์</span>
+              <span className="font-semibold text-gray-800">{displayEngineType}</span>
+            </div>
+            <div>
+              <span className="text-gray-500 block mb-1">ระบบเกียร์</span>
+              <span className="font-semibold text-gray-800">{displayGearType}</span>
+            </div>
+            
+            {/* 🚀 เพิ่มรหัสตัวถังและเครื่องยนต์ที่นี่ */}
+            <div className="col-span-2 grid grid-cols-2 gap-x-6">
+              <div>
+                <span className="text-gray-500 block mb-1">รหัสตัวถัง (VIN)</span>
+                <span className="font-mono text-gray-700 text-xs bg-gray-100 px-2 py-1 rounded">{car.carIdentificationNumber || "-"}</span>
+              </div>
+              <div>
+                <span className="text-gray-500 block mb-1">หมายเลขเครื่องยนต์</span>
+                <span className="font-mono text-gray-700 text-xs bg-gray-100 px-2 py-1 rounded">{car.engineNumber || "-"}</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="flex gap-3">
-          <button className="w-full bg-gray-200 hover:bg-gray-300 py-2 rounded">📞 โทร</button>
-          <button className="w-full bg-green-500 text-white py-2 rounded">💬 LINE ID</button>
+        {/* 🚀 กล่องข้อมูลเพิ่มเติม (ประกัน, พรบ, ประวัติชน) */}
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-4">
+          <h3 className="text-lg font-bold text-gray-800 mb-2 border-b pb-2">ข้อมูลเพิ่มเติม</h3>
+          
+          <div className="flex items-start gap-3">
+            <ShieldCheck className="text-blue-500 mt-0.5" size={20} />
+            <div>
+              <p className="text-sm font-semibold text-gray-800">ประกันภัย</p>
+              <p className="text-sm text-gray-600">{car.insurance || "ไม่มีข้อมูล"}</p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <FileText className="text-green-500 mt-0.5" size={20} />
+            <div>
+              <p className="text-sm font-semibold text-gray-800">พ.ร.บ. (ACT)</p>
+              <p className="text-sm text-gray-600">{car.act || "ไม่มีข้อมูล"}</p>
+            </div>
+          </div>
+
+          {car.isCollisionHistory && (
+            <div className="flex items-start gap-3 bg-red-50 p-3 rounded-lg border border-red-100">
+              <AlertTriangle className="text-red-500 mt-0.5" size={20} />
+              <div>
+                <p className="text-sm font-semibold text-red-800">ประวัติการชน</p>
+                <p className="text-sm text-red-600">รถคันนี้มีประวัติการชนหนัก พลิกคว่ำ หรือจมน้ำ</p>
+              </div>
+            </div>
+          )}
+
+          {car.description && (
+            <div className="pt-3">
+              <p className="text-sm font-semibold text-gray-800 mb-1">รายละเอียดจากผู้ขาย</p>
+              <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg leading-relaxed">
+                {car.description}
+              </p>
+            </div>
+          )}
         </div>
 
-        <div className="text-center mt-4 text-sm text-gray-500 flex justify-center items-center gap-2 cursor-pointer hover:text-blue-600">
+        {/* 🚀 เพิ่มกล่องแสดงชื่อผู้ขาย (Seller) */}
+        {car.seller && (
+          <div className="bg-gray-100 p-4 rounded-xl flex items-center justify-between border border-gray-200">
+            <div>
+              <p className="text-xs text-gray-500 font-semibold mb-1">จัดจำหน่ายโดย</p>
+              <p className="font-bold text-gray-800 text-lg">{car.seller.user?.userName ?? "ผู้ขายยืนยันตัวตนแล้ว"}</p>
+            </div>
+            <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+              <ShieldCheck size={14} />
+              Verified
+            </div>
+          </div>
+        )}
+
+        {/* ปุ่มติดต่อผู้ขาย */}
+        <div className="flex gap-3 pt-2">
+          <button className="w-full bg-gray-800 hover:bg-gray-900 text-white font-semibold py-3 rounded-xl shadow transition">
+            📞 โทรหาผู้ขาย
+          </button>
+          <button className="w-full bg-[#00B900] hover:bg-[#009900] text-white font-semibold py-3 rounded-xl shadow transition">
+            💬 แอดไลน์
+          </button>
+        </div>
+
+        <div className="text-center mt-4 text-sm text-gray-500 flex justify-center items-center gap-2 cursor-pointer hover:text-blue-600 transition">
           <Share2 size={16} />
-          แชร์กับผู้ขาย
+          <span>แชร์ลิงก์รถคันนี้</span>
         </div>
       </div>
     </div>

@@ -3,204 +3,254 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import { useAppDispatch, useAppSelector } from "@/hooks/useAppHookState";
+import React, { useMemo, useState } from "react";
 import { useGetCarAllQuery } from "@/services/carApi";
-import { setCars } from "@/stores/slices/carSlice";
-import CarCard from "./CarCard";
-import { CarSearchParams } from "@/@types/RequestHelpers/CarSearchParams";
-import { defaultCarSearchParams } from "./defaultCarSearchParams";
-import debounce from "lodash/debounce";
-import { useRouter } from "next/navigation";
-import Pagination from "../pagination/Pagination";
-import CarFilters from "../filters/CarFilters";
-import { defaultBrandSearchParams } from "../brandPage/defaultBrandSearchParams";
 import { useGetBrandAllQuery } from "@/services/brandApi";
+import CarCard from "./CarCard";
+import Pagination from "../pagination/Pagination";
+import CarFilters, { CarSearchParams } from "../filters/CarFilters";
 import { baseUrl } from "@/utility/SD";
 
 export default function CarPage() {
-  // ฟิลเตอร์รถ
-  const [carFilters, setCarFilters] = useState(defaultCarSearchParams);
+  // 1. State สำหรับฟิลเตอร์รถยนต์
   const [carSearch, setCarSearch] = useState("");
+  const [carFilters, setCarFilters] = useState<CarSearchParams>({
+    pageNumber: 1,
+    pageSize: 12, // ใช้ 12 เพราะแบ่ง grid 3 หรือ 4 คอลัมน์จะลงตัวสวยงาม
+    sortBy: "id",
+  });
 
-  // ฟิลเตอร์แบรนด์
-  const [brandFilters, setBrandFilters] = useState(defaultBrandSearchParams);
+  // 2. State สำหรับแบรนด์
   const [brandSearch, setBrandSearch] = useState("");
   const [selectedBrandId, setSelectedBrandId] = useState<number | null>(null);
+  const [brandPage, setBrandPage] = useState(1);
+  const brandPageSize = 10;
 
-  // debounce search term สำหรับรถยนต์
-  const debouncedSetCarSearch = useMemo(
-    () =>
-      debounce((val: string) => {
-        setCarFilters((prev) => ({ ...prev, searchTerm: val, pageNumber: 1 }));
-      }, 300),
-    []
-  );
+  // 3. ดึงข้อมูลทั้งหมดในรอบเดียว (ไม่ต้องพึ่ง Pagination จากฝั่ง Server แล้ว)
+  const { data: brandResult, isLoading: brandLoading, error: brandError } = useGetBrandAllQuery({ pageNumber: 1, pageSize: 100 });
+  const { data: carResult, isLoading: carLoading, error: carError } = useGetCarAllQuery({ pageNumber: 1, pageSize: 1000 });
 
-  // debounce search term สำหรับแบรนด์
-  const debouncedSetBrandSearch = useMemo(
-    () =>
-      debounce((val: string) => {
-        setBrandFilters((prev) => ({
-          ...prev,
-          searchTerm: val,
-          pageNumber: 1,
-        }));
-      }, 300),
-    []
-  );
+  const allBrands = brandResult?.result ?? [];
+  const allCars = carResult?.result ?? [];
 
-  useEffect(() => {
-    debouncedSetCarSearch(carSearch);
-    return () => debouncedSetCarSearch.cancel();
-  }, [carSearch]);
+  // -----------------------------------------
+  // 🚀 Logic จัดการข้อมูลแบรนด์ (ซ้ายมือ)
+  // -----------------------------------------
+  const filteredBrands = useMemo(() => {
+    let data = allBrands.filter((b) => b.isUsed && b.id !== undefined);
+    if (brandSearch) {
+      data = data.filter((b) => b.name && b.name.toLowerCase().includes(brandSearch.toLowerCase()));
+    }
+    return data;
+  }, [allBrands, brandSearch]);
 
-  useEffect(() => {
-    debouncedSetBrandSearch(brandSearch);
-    return () => debouncedSetBrandSearch.cancel();
-  }, [brandSearch]);
+  const pagedBrands = useMemo(() => {
+    const start = (brandPage - 1) * brandPageSize;
+    return filteredBrands.slice(start, start + brandPageSize);
+  }, [filteredBrands, brandPage, brandPageSize]);
 
-  // ปรับ carFilters เมื่อเลือกแบรนด์
-  useEffect(() => {
-    setCarFilters((prev) => ({
-      ...prev,
-      brandId: selectedBrandId ?? undefined,
-      pageNumber: 1,
-    }));
-  }, [selectedBrandId]);
+  const brandPaginationMeta = {
+    TotalCount: filteredBrands.length,
+    PageSize: brandPageSize,
+    CurrentPage: brandPage,
+    TotalPages: Math.ceil(filteredBrands.length / brandPageSize),
+    HasNext: brandPage < Math.ceil(filteredBrands.length / brandPageSize),
+    HasPrevious: brandPage > 1,
+  };
 
-  // ดึงข้อมูลแบรนด์ + รถยนต์
-  const {
-    data: brandResult,
-    isLoading: brandLoading,
-    error: brandError,
-  } = useGetBrandAllQuery(brandFilters);
-  const {
-    data: carResult,
-    isLoading: carLoading,
-    error: carError,
-  } = useGetCarAllQuery(carFilters);
+  // -----------------------------------------
+  // 🚀 Logic จัดการข้อมูลรถยนต์ (ขวามือ)
+  // -----------------------------------------
+  const filteredCars = useMemo(() => {
+    let data = [...allCars];
 
-    const brandOptions =
-      brandResult?.result
-        .filter((brand) => brand.isUsed)
-        .map((brand) => ({
-          value: brand.id.toString(),
-          label: brand.name,
-          imageUrl: baseUrl + brand.imageUrl,
-        })) ?? [];
+    // กรองแบรนด์ (ถ้ามีการคลิกเลือกจากเมนูด้านซ้าย)
+    if (selectedBrandId) {
+      data = data.filter((c) => c.brandId === selectedBrandId);
+    }
 
-  const cars = carResult?.result ?? [];
-  const carPagination = carResult?.meta;
+    // กรองคำค้นหา (ชื่อรุ่น, ทะเบียน)
+    if (carSearch) {
+      const q = carSearch.toLowerCase();
+      data = data.filter(
+        (c) =>
+          (c.model && c.model.toLowerCase().includes(q)) ||
+          (c.carRegistrationNumber && c.carRegistrationNumber.toLowerCase().includes(q))
+      );
+    }
 
-  const brands = brandResult?.result ?? [];
-  const brandPagination = brandResult?.meta;
+    // กรองตัวเลข (ราคา, ปี, ไมล์)
+    if (carFilters.minPrice !== undefined) data = data.filter((c) => c.price >= carFilters.minPrice!);
+    if (carFilters.maxPrice !== undefined) data = data.filter((c) => c.price <= carFilters.maxPrice!);
+    if (carFilters.minYear !== undefined) data = data.filter((c) => c.year >= carFilters.minYear!);
+    if (carFilters.maxYear !== undefined) data = data.filter((c) => c.year <= carFilters.maxYear!);
+    if (carFilters.minMileage !== undefined) data = data.filter((c) => c.mileage >= carFilters.minMileage!);
+    if (carFilters.maxMileage !== undefined) data = data.filter((c) => c.mileage <= carFilters.maxMileage!);
 
-  // เลือกแบรนด์
+    // กรอง Enum (ประเภท, เครื่องยนต์, เกียร์, สถานะ)
+    if (carFilters.carType) data = data.filter((c) => c.carType === carFilters.carType);
+    if (carFilters.engineType) data = data.filter((c) => c.engineType === carFilters.engineType);
+    if (carFilters.gearType) data = data.filter((c) => c.gearType === carFilters.gearType);
+    if (carFilters.carStatus) data = data.filter((c) => c.carStatus === carFilters.carStatus);
+
+    // จัดเรียง (Sorting)
+    switch (carFilters.sortBy) {
+      case "price": data.sort((a, b) => a.price - b.price); break;
+      case "price_desc": data.sort((a, b) => b.price - a.price); break;
+      case "year": data.sort((a, b) => a.year - b.year); break;
+      case "yearDesc": data.sort((a, b) => b.year - a.year); break;
+      case "mileageAsc": data.sort((a, b) => a.mileage - b.mileage); break;
+      case "mileageDesc": data.sort((a, b) => b.mileage - a.mileage); break;
+      case "id":
+      default: data.sort((a, b) => b.id - a.id); break;
+    }
+
+    // กรองเฉพาะรถที่ "เปิดใช้งาน" (isUsed = true) สำหรับหน้าบ้านลูกค้า
+    data = data.filter((c) => c.isUsed); // เอาคอมเมนต์ออกถ้าต้องการให้ลูกค้าเห็นเฉพาะรถที่ isUsed
+
+    return data;
+  }, [allCars, carFilters, carSearch, selectedBrandId]);
+
+  const pagedCars = useMemo(() => {
+    const start = (carFilters.pageNumber - 1) * carFilters.pageSize;
+    return filteredCars.slice(start, start + carFilters.pageSize);
+  }, [filteredCars, carFilters.pageNumber, carFilters.pageSize]);
+
+  const carPaginationMeta = {
+    TotalCount: filteredCars.length,
+    PageSize: carFilters.pageSize,
+    CurrentPage: carFilters.pageNumber,
+    TotalPages: Math.ceil(filteredCars.length / carFilters.pageSize),
+    HasNext: carFilters.pageNumber < Math.ceil(filteredCars.length / carFilters.pageSize),
+    HasPrevious: carFilters.pageNumber > 1,
+  };
+
+  // -----------------------------------------
+  // Handlers
+  // -----------------------------------------
   const handleSelectBrand = (id: number) => {
-    setSelectedBrandId(id === selectedBrandId ? null : id); // toggle เลือก / ยกเลิกเลือก
+    // ถ้าคลิกแบรนด์เดิมซ้ำ ให้ยกเลิกการเลือก
+    setSelectedBrandId(id === selectedBrandId ? null : id);
+    setCarFilters((prev) => ({ ...prev, pageNumber: 1 }));
   };
 
-  // เปลี่ยนหน้าแบรนด์
-  const handleBrandPageChange = (page: number) => {
-    setBrandFilters((prev) => ({ ...prev, pageNumber: page }));
-  };
-
-  // เปลี่ยนหน้ารถ
-  const handleCarPageChange = (page: number) => {
-    setCarFilters((prev) => ({ ...prev, pageNumber: page }));
-  };
-
-  if (brandLoading || carLoading)
-    return <p className="p-4 text-gray-500">กำลังโหลด...</p>;
-  if (brandError)
-    return <p className="p-4 text-red-500">โหลดแบรนด์ไม่สำเร็จ</p>;
-  if (carError) return <p className="p-4 text-red-500">โหลดรถไม่สำเร็จ</p>;
+  if (brandLoading || carLoading) return <p className="p-10 text-center text-gray-500 font-bold text-xl">กำลังโหลดข้อมูล...</p>;
+  if (brandError) return <p className="p-10 text-center text-red-500 font-bold">โหลดแบรนด์ไม่สำเร็จ</p>;
+  if (carError) return <p className="p-10 text-center text-red-500 font-bold">โหลดรถยนต์ไม่สำเร็จ</p>;
 
   return (
-    <div className="min-h-screen bg-white py-10 px-4 md:px-10">
-      <h1 className="text-3xl text-[var(--foreground)] font-bold mb-6">ค้นหารถยนต์ของเรา</h1>
+    <div className="min-h-screen bg-gray-50 py-10 px-4 md:px-10">
+      <h1 className="text-3xl text-gray-800 font-extrabold mb-8 text-center md:text-left">
+        ค้นหารถยนต์ของเรา
+      </h1>
 
       {/* Filter ด้านบน */}
-      <div className="mb-6">
-        <CarFilters
-          filters={carFilters}
-          setFilters={setCarFilters}
-          search={carSearch}
-          setSearch={setCarSearch}
-        />
-      </div>
+      <CarFilters
+        filters={carFilters}
+        setFilters={setCarFilters}
+        search={carSearch}
+        setSearch={setCarSearch}
+      />
 
-      {/* สองคอลัมน์ */}
-      <div className="flex gap-6">
-        {/* ฝั่งซ้าย แสดงแบรนด์ */}
-        <div className="w-1/4 bg-white rounded-lg shadow p-4 overflow-auto max-h-[600px]">
+      {/* เค้าโครงสองคอลัมน์ */}
+      <div className="flex flex-col md:flex-row gap-6">
+        
+        {/* ฝั่งซ้าย: แบรนด์รถยนต์ */}
+        <div className="w-full md:w-1/4 lg:w-1/5 bg-white rounded-xl shadow-md p-5 flex flex-col h-fit md:sticky top-24">
+          <h2 className="text-lg font-bold text-gray-700 mb-4 border-b pb-2">เลือกตามยี่ห้อ</h2>
           <input
             type="text"
-            placeholder="ค้นหาแบรนด์..."
-            className="input input-bordered w-full mb-4"
+            placeholder="ค้นหายี่ห้อรถ..."
+            className="input input-bordered w-full mb-4 focus:outline-primary"
             value={brandSearch}
-            onChange={(e) => setBrandSearch(e.target.value)}
+            onChange={(e) => {
+              setBrandSearch(e.target.value);
+              setBrandPage(1); // ค้นหาใหม่ให้กลับไปหน้าแรก
+            }}
           />
 
-          <ul>
-            {brandOptions.length > 0 ? (
-              brandOptions
-                .filter((brand) =>
-                  brand.label.toLowerCase().includes(brandSearch.toLowerCase())
-                )
-                .map((brand) => (
-                  <li
-                    key={brand.value}
-                    onClick={() => handleSelectBrand(Number(brand.value))}
-                    className={`cursor-pointer flex items-center gap-3 p-2 rounded ${
-                      selectedBrandId === Number(brand.value)
-                        ? "bg-primary text-white"
-                        : "hover:bg-gray-100"
-                    }`}
-                  >
+          <ul className="flex-1 overflow-y-auto max-h-[400px] space-y-1 pr-2 custom-scrollbar">
+            {pagedBrands.length > 0 ? (
+              pagedBrands.map((brand) => (
+                <li
+                  key={brand.id}
+                  onClick={() => brand.id !== undefined && handleSelectBrand(brand.id)}
+                  className={`cursor-pointer flex items-center gap-3 p-2.5 rounded-lg transition-all font-medium ${
+                    selectedBrandId === brand.id
+                      ? "bg-primary text-white shadow-md"
+                      : "hover:bg-gray-100 text-gray-700"
+                  }`}
+                >
+                  <div className="bg-white p-1 rounded border border-gray-200">
                     <img
-                      src={brand.imageUrl}
-                      alt={brand.label}
-                      className="w-8 h-8 object-contain rounded"
+                      src={baseUrl + brand.carImages}
+                      alt={brand.name}
+                      className="w-7 h-7 object-contain"
                     />
-                    <span>{brand.label}</span>
-                  </li>
-                ))
-                
+                  </div>
+                  <span className="truncate">{brand.name}</span>
+                </li>
+              ))
             ) : (
-              <p className="text-gray-500">ไม่พบแบรนด์ที่ค้นหา</p>
+              <p className="text-gray-500 text-center py-4 text-sm">ไม่พบยี่ห้อรถที่ค้นหา</p>
             )}
           </ul>
-          {brandPagination && (
-            <div className="mt-8 flex justify-center">
+
+          {/* Pagination ของฝั่ง Brand */}
+          {filteredBrands.length > brandPageSize && (
+            <div className="mt-4 flex justify-center border-t pt-4">
               <Pagination
-                pagination={brandPagination}
-                onPageChange={handleBrandPageChange}
+                pagination={brandPaginationMeta as any}
+                onPageChange={(p) => setBrandPage(p)}
               />
             </div>
           )}
         </div>
 
-        {/* ฝั่งขวา แสดงรถยนต์ */}
-        <div className="w-3/4">
-          {cars.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-              {cars.map((car) => (
+        {/* ฝั่งขวา: แสดงรายการรถยนต์ */}
+        <div className="w-full md:w-3/4 lg:w-4/5">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold text-gray-700">
+              {selectedBrandId 
+                ? `รถยนต์ยี่ห้อ ${allBrands.find(b => b.id === selectedBrandId)?.name}` 
+                : "รถยนต์ทั้งหมด"}
+            </h2>
+            <span className="text-gray-500 text-sm font-medium bg-gray-200 px-3 py-1 rounded-full">
+              พบ {filteredCars.length} คัน
+            </span>
+          </div>
+
+          {pagedCars.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {pagedCars.map((car) => (
                 <CarCard key={car.id} car={car} />
               ))}
             </div>
           ) : (
-            <p className="text-center text-gray-500">
-              ไม่พบรถยนต์ที่ตรงกับการค้นหา
-            </p>
+            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl shadow-sm border border-dashed border-gray-300">
+              <span className="text-5xl mb-4">🚗</span>
+              <p className="text-xl text-gray-500 font-semibold">
+                ไม่พบรถยนต์ที่ตรงกับเงื่อนไข
+              </p>
+              <button 
+                onClick={() => {
+                  setCarFilters({ pageNumber: 1, pageSize: 12, sortBy: "id" });
+                  setCarSearch("");
+                  setSelectedBrandId(null);
+                }}
+                className="mt-4 btn btn-outline btn-primary btn-sm"
+              >
+                ล้างตัวกรองทั้งหมด
+              </button>
+            </div>
           )}
 
-          {carPagination && (
-            <div className="mt-8 flex justify-center">
+          {/* Pagination ของฝั่ง รถยนต์ */}
+          {filteredCars.length > carFilters.pageSize && (
+            <div className="mt-10 flex justify-center">
               <Pagination
-                pagination={carPagination}
-                onPageChange={handleCarPageChange}
+                pagination={carPaginationMeta as any}
+                onPageChange={(p) => setCarFilters((prev) => ({ ...prev, pageNumber: p }))}
               />
             </div>
           )}
