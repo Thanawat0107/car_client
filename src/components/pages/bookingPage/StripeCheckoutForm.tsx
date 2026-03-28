@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Elements,
   PaymentElement,
@@ -126,18 +126,16 @@ export default function StripeCheckoutForm({ booking, onSuccess }: Props) {
   const [createIntent] = useCreatePaymentIntentMutation();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loadError, setLoadError] = useState(false);
+  const calledRef = useRef(false);
 
   useEffect(() => {
-    let cancelled = false;
+    if (calledRef.current) return;
+    calledRef.current = true;
+
     createIntent({ bookingId: booking.id })
       .unwrap()
-      .then((data) => {
-        if (!cancelled) setClientSecret(data.clientSecret);
-      })
-      .catch(() => {
-        if (!cancelled) setLoadError(true);
-      });
-    return () => { cancelled = true; };
+      .then((data) => setClientSecret(data.clientSecret))
+      .catch(() => setLoadError(true));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [booking.id]);
 
