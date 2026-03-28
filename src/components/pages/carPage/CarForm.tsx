@@ -27,8 +27,11 @@ import {
   statusLabels,
 } from "../filters/CarFilters";
 import { useGetBrandAllQuery } from "@/services/brandApi";
+import { useGetSellerAllQuery, useGetSellerByUserIdQuery } from "@/services/sellerApi";
 import { SelectFieldWithImage } from "../selectField/SelectFieldWithImage";
 import { CarCreateDto, CarUpdateDto } from "@/@types/Dto";
+import { useAppSelector } from "@/hooks/useAppHookState";
+import { SD_Roles } from "@/@types/Status";
 
 const MySwal = withReactContent(Swal);
 const redirectPath = "/manages/car";
@@ -67,9 +70,15 @@ export default function CarForm() {
   const carId = useParams()?.id;
   const isEditMode = Boolean(carId);
 
+  const { role, userId } = useAppSelector((state) => state.auth);
+  const isAdmin = role === SD_Roles.Role_Admin;
+  const isSeller = role === SD_Roles.Role_Seller;
+
   const { data: result, isLoading } = useGetCarByIdQuery(Number(carId), { skip: !isEditMode });
   const { data: brands } = useGetBrandAllQuery({ pageNumber: 1, pageSize: 100 });
-  
+  const { data: sellerData } = useGetSellerByUserIdQuery(userId, { skip: !isSeller || !userId });
+  const { data: sellersData } = useGetSellerAllQuery({ pageNumber: 1, pageSize: 100 }, { skip: !isAdmin });
+
   const [createCar] = useCreateCarMutation();
   const [updateCar] = useUpdateCarMutation();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -89,6 +98,13 @@ export default function CarForm() {
       });
     }
   }, [isEditMode, result]);
+
+  // Auto-set sellerId สำหรับ Seller role
+  useEffect(() => {
+    if (isSeller && sellerData?.id) {
+      setInitialValues((prev) => ({ ...prev, sellerId: sellerData.id! }));
+    }
+  }, [isSeller, sellerData]);
 
   useEffect(() => {
     if (isEditMode && result?.carImages?.[0]) {
@@ -212,6 +228,39 @@ return (
               onSubmit={formik.handleSubmit}
               className="grid grid-cols-1 md:grid-cols-2 gap-6"
             >
+              {/* เจ้าของรถ (Admin เลือก Seller, Seller เห็นชื่อตัวเอง) */}
+              {isAdmin && (
+                <div className="col-span-2">
+                  <label className="block text-sm font-semibold mb-1">เจ้าของรถ (ผู้จำหน่าย)</label>
+                  <select
+                    className="select select-bordered w-full"
+                    value={formik.values.sellerId}
+                    onChange={(e) => formik.setFieldValue("sellerId", Number(e.target.value))}
+                  >
+                    <option value={0}>-- เลือกผู้จำหน่าย --</option>
+                    {sellersData?.result
+                      ?.filter((s) => s.isVerified)
+                      .map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.user?.fullName} ({s.user?.email})
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              )}
+              {isSeller && (
+                <div className="col-span-2">
+                  <label className="block text-sm font-semibold mb-1">เจ้าของรถ (ผู้จำหน่าย)</label>
+                  <input
+                    type="text"
+                    className="input input-bordered w-full bg-base-200"
+                    value={sellerData?.user?.fullName ?? "กำลังโหลด..."}
+                    readOnly
+                    disabled
+                  />
+                </div>
+              )}
+
               {/* ยี่ห้อรถ */}
               <div className="col-span-2 md:col-span-1">
                 <label className="block text-sm font-semibold mb-1">

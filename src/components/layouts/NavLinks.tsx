@@ -16,6 +16,12 @@ const adminMenu = [
   { name: "จัดการยี่ห้อ", path: "/manages/brand" },
   { name: "จัดการรถยนต์", path: "/manages/car" },
   { name: "จัดการผู้จำหน่าย", path: "/manages/seller" },
+  { name: "การจองทั้งระบบ", path: "/manages/admin-bookings" },
+  { name: "ชำระเงินทั้งระบบ", path: "/manages/admin-payments" },
+];
+
+const sellerMenu = [
+  { name: "จัดการรถยนต์", path: "/manages/car" },
   { name: "จัดการการจอง", path: "/manages/booking" },
   { name: "จัดการชำระเงิน", path: "/manages/payment" },
 ];
@@ -58,7 +64,7 @@ export default function NavLinks() {
           <details>
             <summary>การจัดการ</summary>
             <ul className="p-2 bg-[var(--color-neutral)]">
-              {adminMenu.map((item) => (
+              {(role === SD_Roles.Role_Admin ? adminMenu : sellerMenu).map((item) => (
                 <li key={item.path}>
                   <Link href={item.path}>{item.name}</Link>
                 </li>

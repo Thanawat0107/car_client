@@ -1,8 +1,7 @@
 import { loadStripe } from "@stripe/stripe-js";
-import { Elements } from "@stripe/react-stripe-js";
 
-export const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+// ดึงค่า Publishable Key จากไฟล์ .env
+const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!;
 
-export const StripeProvider = ({ children }: { children: React.ReactNode }) => (
-  <Elements stripe={stripePromise}>{children}</Elements>
-);
+// โหลด Stripe instance แล้ว export ออกไปให้ Component อื่นใช้งาน
+export const stripePromise = loadStripe(stripeKey);

@@ -1,12 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  // output: "export",
-  // basePath: process.env.BASE_PATH,
-  // env: {
-  //   BASE_URL: process.env.BASE_URL,
-  // },
+  basePath: "/cs66/next/s07/wepcar",
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 };
 
 export default nextConfig;

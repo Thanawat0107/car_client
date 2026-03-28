@@ -53,6 +53,17 @@ export const sellerApi = createApi({
       providesTags: (result, error, sellerId) => [{ type: "Seller", id: sellerId }],
     }),
 
+    getSellerByUserId: builder.query<Seller, string>({
+      query: (userId) => ({
+        url: `sellers/getbyuserid/${userId}`,
+        method: "GET",
+      }),
+      keepUnusedDataFor: 300,
+      transformResponse: unwrapResult<Seller>,
+      providesTags: (result) =>
+        result ? [{ type: "Seller", id: result.id }] : [],
+    }),
+
     createSeller: builder.mutation<Seller, SellerCreateDto>({
       query: (body) => ({
         url: "sellers/create",
@@ -109,6 +120,7 @@ export const sellerApi = createApi({
 export const {
   useGetSellerAllQuery,
   useGetSellerByIdQuery,
+  useGetSellerByUserIdQuery,
   useCreateSellerMutation,
   useUpdateSellerMutation,
   useDeleteSellerMutation,

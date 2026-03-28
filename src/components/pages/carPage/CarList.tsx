@@ -3,6 +3,7 @@
 "use client";
 
 import { useDeleteCarMutation, useGetCarAllQuery } from "@/services/carApi";
+import { useGetSellerByUserIdQuery } from "@/services/sellerApi";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import CarFilters, { CarSearchParams } from "../filters/CarFilters";
@@ -12,6 +13,8 @@ import withReactContent from "sweetalert2-react-content";
 import { baseUrl } from "@/utility/SD";
 import { carTypeLabels } from "../filters/CarFilters";
 import { getEnumLabel } from "@/utility/enumHelpers";
+import { useAppSelector } from "@/hooks/useAppHookState";
+import { SD_Roles } from "@/@types/Status";
 
 const MySwal = withReactContent(Swal);
 const createPath = "/manages/car/create";
@@ -19,6 +22,14 @@ const editPath = "/manages/car/edit/";
 
 export default function CarList() {
   const router = useRouter();
+  const { role, userId } = useAppSelector((state) => state.auth);
+  const isSeller = role === SD_Roles.Role_Seller;
+
+  // ดึง sellerId ของ Seller ที่ login อยู่
+  const { data: sellerData } = useGetSellerByUserIdQuery(userId, {
+    skip: !isSeller || !userId,
+  });
+  const sellerId = isSeller ? sellerData?.id : undefined;
 
   // 1. State สำหรับฟิลเตอร์และค้นหา
   const [search, setSearch] = useState("");
@@ -28,11 +39,11 @@ export default function CarList() {
     sortBy: "id", // ค่าเริ่มต้นให้เรียงตามล่าสุด
   });
 
-  // 2. ดึงข้อมูลรถ "ทั้งหมด"
-  const { data: result, error, isLoading } = useGetCarAllQuery({ 
-    pageNumber: 1, 
-    pageSize: 1000 
-  });
+  // 2. ดึงข้อมูลรถ — Seller เห็นเฉพาะรถตัวเอง, Admin เห็นทั้งหมด
+  const { data: result, error, isLoading } = useGetCarAllQuery(
+    { pageNumber: 1, pageSize: 1000, sellerId },
+    { skip: isSeller && !sellerId } // รอ sellerId โหลดก่อน
+  );
   
   const [deleteCar] = useDeleteCarMutation();
 

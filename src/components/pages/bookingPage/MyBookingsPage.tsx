@@ -12,7 +12,9 @@ import { useMemo, useState } from "react";
 import Pagination from "../pagination/Pagination";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
-import { CalendarDays, Clock, XCircle } from "lucide-react";
+import { CalendarDays, Clock, CreditCard, XCircle } from "lucide-react";
+import BookingPaymentModal from "./BookingPaymentModal";
+import { Booking } from "@/@types/Dto";
 
 const MySwal = withReactContent(Swal);
 const PAGE_SIZE = 6;
@@ -35,6 +37,7 @@ const formatDate = (dateStr: string) =>
 export default function MyBookingsPage() {
   const { userId } = useAppSelector((state) => state.auth);
   const [page, setPage] = useState(1);
+  const [paymentBooking, setPaymentBooking] = useState<Booking | null>(null);
 
   const { data, isLoading, error } = useGetBookingAllQuery(
     { userId, pageNumber: 1, pageSize: 1000 },
@@ -92,6 +95,7 @@ export default function MyBookingsPage() {
     );
 
   return (
+    <>
     <div className="min-h-screen bg-gray-50 py-10 px-4 md:px-10">
       {/* Header */}
       <div className="mb-8">
@@ -123,6 +127,9 @@ export default function MyBookingsPage() {
                   ? baseUrl + car.carImages[0]
                   : "/placeholder.png";
               const canCancel =
+                booking.bookingStatus === BookingStatus.Pending ||
+                booking.bookingStatus === BookingStatus.PendingPayment;
+              const canPay =
                 booking.bookingStatus === BookingStatus.Pending ||
                 booking.bookingStatus === BookingStatus.PendingPayment;
 
@@ -190,6 +197,16 @@ export default function MyBookingsPage() {
                           {car?.bookingPrice?.toLocaleString() ?? 0} ฿
                         </p>
                       </div>
+                      <div className="flex gap-2">
+                      {canPay && (
+                        <button
+                          onClick={() => setPaymentBooking(booking)}
+                          className="btn btn-sm btn-primary gap-1"
+                        >
+                          <CreditCard size={14} />
+                          ชำระเงิน
+                        </button>
+                      )}
                       {canCancel && (
                         <button
                           onClick={() => handleCancel(booking.id)}
@@ -199,6 +216,7 @@ export default function MyBookingsPage() {
                           ยกเลิก
                         </button>
                       )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -217,5 +235,14 @@ export default function MyBookingsPage() {
         </>
       )}
     </div>
+
+    {paymentBooking && (
+      <BookingPaymentModal
+        booking={paymentBooking}
+        onClose={() => setPaymentBooking(null)}
+        onSuccess={() => setPaymentBooking(null)}
+      />
+    )}
+    </>
   );
 }
