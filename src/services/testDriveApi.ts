@@ -2,7 +2,12 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { baseUrlAPI } from "../utility/SD";
 import { PaginationMeta } from "@/@types/Responsts/PaginationMeta";
 import { ApiResponse } from "@/@types/Responsts/ApiResponse";
-import { TestDrive, TestDriveCreateDto, TestDriveUpdateDto } from "@/@types/Dto";
+import {
+  TestDrive,
+  TestDriveCreateDto,
+  TestDriveStatusUpdateDto,
+  TestDriveUpdateDto,
+} from "@/@types/Dto";
 import { unwrapResult } from "../utility/apiHelpers";
 import signalrService from "../services/signalrService";
 
@@ -109,6 +114,22 @@ export const testDriveApi = createApi({
       ],
     }),
 
+    updateTestDriveStatus: builder.mutation<
+      TestDrive,
+      { data: TestDriveStatusUpdateDto; testDriveId: number }
+    >({
+      query: ({ data, testDriveId }) => ({
+        url: `testdrives/update-status/${testDriveId}`,
+        method: "PUT",
+        body: data,
+      }),
+      transformResponse: unwrapResult<TestDrive>,
+      invalidatesTags: (result, error, { testDriveId }) => [
+        { type: "TestDrive", id: testDriveId },
+        { type: "TestDrive", id: "LIST" },
+      ],
+    }),
+
     deleteTestDrive: builder.mutation<string, number>({
       query: (id) => ({
         url: `testdrives/delete/${id}`,
@@ -128,6 +149,7 @@ export const {
   useGetTestDriveByIdQuery,
   useCreateTestDriveMutation,
   useUpdateTestDriveMutation,
+  useUpdateTestDriveStatusMutation,
   useDeleteTestDriveMutation,
   usePrefetch,
 } = testDriveApi;

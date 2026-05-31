@@ -7,4 +7,5 @@ export interface Seller {
   identityNumber: string;
   address: string;
   isVerified: boolean;
+  meetingUrl?: string;
 }

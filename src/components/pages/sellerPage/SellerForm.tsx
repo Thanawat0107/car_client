@@ -23,6 +23,7 @@ type SellerFormValues = {
   identityNumber: string;
   address: string;
   isVerified: boolean;
+  meetingUrl: string;
 };
 
 const baseInitialValues: SellerFormValues = {
@@ -30,6 +31,7 @@ const baseInitialValues: SellerFormValues = {
   identityNumber: "",
   address: "",
   isVerified: false,
+  meetingUrl: "",
 };
 
 export default function SellerForm() {
@@ -54,6 +56,7 @@ export default function SellerForm() {
         identityNumber: result.identityNumber || "",
         address: result.address || "",
         isVerified: result.isVerified ?? false,
+        meetingUrl: result.meetingUrl || "",
       });
     }
   }, [isEditMode, result]);
@@ -66,6 +69,30 @@ export default function SellerForm() {
       timer: isError ? undefined : 1500,
       showConfirmButton: isError,
     });
+
+  const handleTestMeetingUrl = async () => {
+    const meetingUrl = formik.values.meetingUrl?.trim();
+
+    if (!meetingUrl) {
+      await MySwal.fire({
+        icon: "warning",
+        title: "ยังไม่มีลิงก์",
+        text: "กรุณากรอกลิงก์ LIVE TOUR ก่อนทดสอบ",
+      });
+      return;
+    }
+
+    if (!/^https:\/\//i.test(meetingUrl)) {
+      await MySwal.fire({
+        icon: "error",
+        title: "ลิงก์ไม่ถูกต้อง",
+        text: "ลิงก์ต้องขึ้นต้นด้วย https:// เท่านั้น",
+      });
+      return;
+    }
+
+    window.open(meetingUrl, "_blank", "noopener,noreferrer");
+  };
 
   const formik = useFormik<SellerFormValues>({
     enableReinitialize: true,
@@ -81,6 +108,7 @@ export default function SellerForm() {
             // เพิ่ม isVerified ใน Payload ถ้า Backend ของคุณยอมให้อัปเดตสถานะด้วย Route นี้นะครับ
             // (ถ้า API แยก Route สำหรับอนุมัติ ก็ไม่ต้องส่งฟิลด์นี้ไป)
             isVerified: values.isVerified, 
+            meetingUrl: values.meetingUrl || undefined,
           };
 
           await updateSeller({
@@ -111,6 +139,9 @@ export default function SellerForm() {
       }
     },
   });
+
+  const meetingUrlValue = formik.values.meetingUrl.trim();
+  const canTestMeetingUrl = /^https:\/\/\S+$/i.test(meetingUrlValue);
 
   if (isEditMode && isLoading) {
     return (
@@ -181,6 +212,31 @@ export default function SellerForm() {
 
             {isEditMode && (
               <div className="form-control bg-gray-50 p-4 rounded-xl border border-gray-200 mt-6">
+                <div className="mb-4">
+                  <InputField
+                    label="ลิงก์ CAR LIVE TOUR (Google Meet / Zoom / ฯลฯ)"
+                    name="meetingUrl"
+                    type="url"
+                    placeholder="เช่น https://meet.google.com/abc-defg-hij"
+                    value={formik.values.meetingUrl}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    error={formik.errors.meetingUrl}
+                    touched={formik.touched.meetingUrl}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    ตัวอย่างลิงก์ที่ถูกต้อง: https://meet.google.com/abc-defg-hij หรือ https://zoom.us/j/123456789
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleTestMeetingUrl}
+                    className="btn btn-sm btn-outline btn-info mt-2"
+                    disabled={!canTestMeetingUrl}
+                    title="ระบบจะเปิดลิงก์ในแท็บใหม่ หาก URL ถูกต้องและขึ้นต้นด้วย https://"
+                  >
+                    ทดสอบลิงก์ LIVE TOUR
+                  </button>
+                </div>
                 <label className="cursor-pointer flex items-center gap-3">
                   <input
                     type="checkbox"

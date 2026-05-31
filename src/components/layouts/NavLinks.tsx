@@ -17,12 +17,14 @@ const adminMenu = [
   { name: "จัดการรถยนต์", path: "/manages/car" },
   { name: "จัดการผู้จำหน่าย", path: "/manages/seller" },
   { name: "การจองทั้งระบบ", path: "/manages/admin-bookings" },
+  { name: "ทดลองขับทั้งระบบ", path: "/manages/admin-test-drives" },
   { name: "ชำระเงินทั้งระบบ", path: "/manages/admin-payments" },
 ];
 
 const sellerMenu = [
   { name: "จัดการรถยนต์", path: "/manages/car" },
   { name: "จัดการการจอง", path: "/manages/booking" },
+  { name: "จัดการทดลองขับ", path: "/manages/test-drive" },
   { name: "จัดการชำระเงิน", path: "/manages/payment" },
 ];
 
@@ -49,14 +51,24 @@ export default function NavLinks() {
       ))}
 
       {mounted && isAuthenticated && !isAdminOrSeller && (
-        <li>
-          <Link
-            className={pathname === "/booking" ? "active" : ""}
-            href="/booking"
-          >
-            การจองของฉัน
-          </Link>
-        </li>
+        <>
+          <li>
+            <Link
+              className={pathname === "/booking" ? "active" : ""}
+              href="/booking"
+            >
+              การจองของฉัน
+            </Link>
+          </li>
+          <li>
+            <Link
+              className={pathname === "/test-drive" ? "active" : ""}
+              href="/test-drive"
+            >
+              ทดลองขับของฉัน
+            </Link>
+          </li>
+        </>
       )}
 
       {mounted && isAdminOrSeller && (

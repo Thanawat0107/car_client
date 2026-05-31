@@ -3,6 +3,7 @@
 
 import { useGetCarByIdQuery } from "@/services/carApi";
 import { useCreateBookingMutation } from "@/services/bookingsApi";
+import { useCreateTestDriveMutation } from "@/services/testDriveApi";
 import { Share2, AlertTriangle, ShieldCheck, FileText, CalendarClock } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { baseUrl } from "@/utility/SD";
@@ -33,6 +34,7 @@ export default function CarDetailPage() {
   const { userId, isAuthenticated } = useAppSelector((state) => state.auth);
   const { data: car, isLoading, error } = useGetCarByIdQuery(carId);
   const [createBooking] = useCreateBookingMutation();
+  const [createTestDrive, { isLoading: isCreatingTestDrive }] = useCreateTestDriveMutation();
 
   const handleBooking = async () => {
     if (!isAuthenticated || !userId) {
@@ -71,6 +73,86 @@ export default function CarDetailPage() {
     } finally {
       setIsBooking(false);
     }
+  };
+
+  const handleCreateTestDrive = async () => {
+    if (!isAuthenticated || !userId) {
+      await MySwal.fire({
+        icon: "warning",
+        title: "กรุณาเข้าสู่ระบบ",
+        text: "คุณต้องเข้าสู่ระบบก่อนนัดทดลองขับ",
+        confirmButtonText: "เข้าสู่ระบบ",
+      });
+      router.push("/login");
+      return;
+    }
+
+    const askDate = await MySwal.fire({
+      title: "เลือกวันเวลานัดทดลองขับ",
+      input: "datetime-local",
+      inputAttributes: {
+        min: new Date(Date.now() + 30 * 60 * 1000).toISOString().slice(0, 16),
+      },
+      showCancelButton: true,
+      confirmButtonText: "ยืนยันนัดหมาย",
+      cancelButtonText: "ยกเลิก",
+      preConfirm: (value) => {
+        if (!value) {
+          MySwal.showValidationMessage("กรุณาเลือกวันและเวลา");
+          return;
+        }
+
+        const selectedDate = new Date(value);
+        if (selectedDate.getTime() <= Date.now()) {
+          MySwal.showValidationMessage("วันนัดหมายต้องเป็นเวลาในอนาคต");
+          return;
+        }
+
+        return value;
+      },
+    });
+
+    if (!askDate.isConfirmed || !askDate.value) return;
+
+    try {
+      await createTestDrive({
+        userId,
+        carId,
+        appointmentDate: new Date(askDate.value).toISOString(),
+      }).unwrap();
+
+      await MySwal.fire({
+        icon: "success",
+        title: "นัดหมายสำเร็จ",
+        text: "บันทึกรายการทดลองขับเรียบร้อยแล้ว",
+      });
+
+      router.push("/test-drive");
+    } catch (err: any) {
+      await MySwal.fire({
+        icon: "error",
+        title: "เกิดข้อผิดพลาด",
+        text: err?.data?.message ?? "ไม่สามารถนัดทดลองขับได้ กรุณาลองใหม่อีกครั้ง",
+      });
+    }
+  };
+
+  const handleLiveTour = async () => {
+    const meetingUrl = car?.seller?.meetingUrl;
+    const confirm = await MySwal.fire({
+      title: "เปิด CAR LIVE TOUR",
+      html: meetingUrl
+        ? "ระบบจะเปิดห้องประชุมออนไลน์ของผู้ขายในแท็บใหม่"
+        : "ผู้ขายยังไม่ได้ตั้งค่าลิงก์ LIVE TOUR<br/><small style='color:#6b7280'>ระบบจะเปิด Google Meet ใหม่แทน</small>",
+      icon: "info",
+      showCancelButton: true,
+      confirmButtonText: "เปิดห้องประชุม",
+      cancelButtonText: "ยกเลิก",
+    });
+
+    if (!confirm.isConfirmed) return;
+
+    window.open(meetingUrl ?? "https://meet.google.com/new", "_blank", "noopener,noreferrer");
   };
 
   if (isLoading)
@@ -143,10 +225,17 @@ export default function CarDetailPage() {
         )}
 
         <div className="flex flex-col sm:flex-row gap-4 mt-6">
-          <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold w-full py-3 rounded-lg shadow-sm transition">
+          <button
+            onClick={handleLiveTour}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold w-full py-3 rounded-lg shadow-sm transition"
+          >
             🚗 CAR LIVE TOUR
           </button>
-          <button className="bg-green-600 hover:bg-green-700 text-white font-semibold w-full py-3 rounded-lg shadow-sm transition">
+          <button
+            onClick={handleCreateTestDrive}
+            className="bg-green-600 hover:bg-green-700 text-white font-semibold w-full py-3 rounded-lg shadow-sm transition disabled:bg-gray-300 disabled:cursor-not-allowed"
+            disabled={car.carStatus !== "Available" || isCreatingTestDrive}
+          >
             🛞 นัดหมายทดลองขับ
           </button>
         </div>

@@ -36,4 +36,5 @@ export type { LoanUpdateDto } from "./UpdateDto/LoanUpdateDto";
 export type { PaymentUpdateDto } from "./UpdateDto/PaymentUpdateDto";
 export type { ReviewUpdateDto } from "./UpdateDto/ReviewUpdateDto";
 export type { SellerUpdateDto } from "./UpdateDto/SellerUpdateDto";
+export type { TestDriveStatusUpdateDto } from "./UpdateDto/TestDriveStatusUpdateDto";
 export type { TestDriveUpdateDto } from "./UpdateDto/TestDriveUpdateDto";

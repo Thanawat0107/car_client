@@ -12,4 +12,10 @@ export const validationSchema = Yup.object().shape({
   // 🚀 เพิ่ม isVerified แบบ optional เข้ามา เพื่อรองรับหน้า SellerForm (ของ Admin) ที่มีการติ๊กเปิด/ปิดสถานะ
   // ส่วนหน้า RegisterSellerForm ผู้ใช้จะไม่ได้กรอกฟิลด์นี้ แต่ระบบยัดค่า false ให้เอง จึงให้เป็น optional ได้ครับ
   isVerified: Yup.boolean().optional(),
+
+  meetingUrl: Yup.string()
+    .trim()
+    .matches(/^$|^https:\/\//i, "ลิงก์ต้องขึ้นต้นด้วย https:// เท่านั้น")
+    .url("ลิงก์ไม่ถูกต้อง กรุณาระบุ URL ที่ขึ้นต้นด้วย https://")
+    .optional(),
 });

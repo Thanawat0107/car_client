@@ -6,3 +6,4 @@ export type { PaymentUpdateDto } from "./PaymentUpdateDto";
 export type { ReviewUpdateDto } from "./ReviewUpdateDto";
 export type { SellerUpdateDto } from "./SellerUpdateDto";
 export type { TestDriveUpdateDto } from "./TestDriveUpdateDto";
+export type { TestDriveStatusUpdateDto } from "./TestDriveStatusUpdateDto";
